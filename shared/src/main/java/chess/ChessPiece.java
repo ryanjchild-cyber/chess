@@ -57,6 +57,26 @@ public class ChessPiece {
     public int hashCode() {
         return Objects.hash(pieceColor, type);
     }
+    private void movementRepeat(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> moves, ChessPiece piece, int[][] directions) {
+        for (int[] movement:directions) {
+            int row = myPosition.getRow() + movement[0];
+            int col = myPosition.getColumn() + movement[1];
+            while (row >= 1 && row <= 8 && col >= 1 && col <= 8) {
+                ChessPosition newPosition = new ChessPosition(row,col);
+                ChessPiece target = board.getPiece(newPosition);
+                if (target == null) {
+                    moves.add(new ChessMove(myPosition,newPosition,null));
+                } else {
+                    if (target.getTeamColor() != piece.getTeamColor()) {
+                        moves.add(new ChessMove(myPosition,newPosition, null));
+                    }
+                    break;
+                }
+                row += movement[0];
+                col += movement[1];
+            }
+        }
+    }
 
     private void pawnPromotion(Collection<ChessMove> moves, ChessPosition start,
                                ChessPosition end, int promotion) {
@@ -166,27 +186,17 @@ public class ChessPiece {
             };
             movementRepeat(board, myPosition, moves, piece, directions);
         }
+        if (piece.getPieceType() == PieceType.ROOK) {
+            int[][] directions = {
+                    {1,0},
+                    {-1,0},
+                    {0,1},
+                    {0,-1}
+            };
+            movementRepeat(board, myPosition, moves, piece, directions);
+        }
         return moves;
     }
 
-    private void movementRepeat(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> moves, ChessPiece piece, int[][] directions) {
-        for (int[] movement:directions) {
-            int row = myPosition.getRow() + movement[0];
-            int col = myPosition.getColumn() + movement[1];
-            while (row >= 1 && row <= 8 && col >= 1 && col <= 8) {
-                ChessPosition newPosition = new ChessPosition(row,col);
-                ChessPiece target = board.getPiece(newPosition);
-                if (target == null) {
-                    moves.add(new ChessMove(myPosition,newPosition,null));
-                } else {
-                    if (target.getTeamColor() != piece.getTeamColor()) {
-                        moves.add(new ChessMove(myPosition,newPosition, null));
-                    }
-                    break;
-                }
-                row += movement[0];
-                col += movement[1];
-            }
-        }
-    }
+
 }
