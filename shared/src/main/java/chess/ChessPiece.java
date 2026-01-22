@@ -14,7 +14,6 @@ import java.util.Objects;
 public class ChessPiece {
     private final ChessGame.TeamColor pieceColor;
     private final PieceType type;
-
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.pieceColor=pieceColor;
         this.type=type;
@@ -70,7 +69,6 @@ public class ChessPiece {
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> moves=new ArrayList<>();
         ChessPiece piece = board.getPiece(myPosition);
-
         if (piece.getPieceType()==PieceType.BISHOP) {
             int[][] directions={
                     {1,1},
@@ -80,7 +78,7 @@ public class ChessPiece {
             };
             for (int[] movement: directions) {
                 int row=myPosition.getRow()+movement[0];
-                int col= myPosition.getColumn()+movement[1];
+                int col=myPosition.getColumn()+movement[1];
                 while (row>=1 && row<=8 && col>=1 && col<=8) {
                     ChessPosition newPosition=new ChessPosition(row,col);
                     ChessPiece target=board.getPiece(newPosition);
@@ -94,6 +92,28 @@ public class ChessPiece {
                     }
                     row+=movement[0];
                     col+=movement[1];
+                }
+            }
+        }
+        if (piece.getPieceType()==PieceType.KING) {
+            int[][] directions={
+                    {1,1},{0,1},
+                    {1,-1},{1,0},
+                    {-1,1},{0,-1},
+                    {-1,-1},{-1,0}
+            };
+            for (int[] movement: directions) {
+                int row=myPosition.getRow()+movement[0];
+                int col=myPosition.getColumn()+movement[1];
+                if (row<1 || row>8 || col<1 || col>8) {
+                    break;
+                }
+                ChessPosition newPosition=new ChessPosition(row,col);
+                ChessPiece target=board.getPiece(newPosition);
+                if (target == null) {
+                    moves.add(new ChessMove(myPosition,newPosition,null));
+                } else if (target.getTeamColor() != piece.getTeamColor()){
+                    moves.add(new ChessMove(myPosition,newPosition,null));
                 }
             }
         }
