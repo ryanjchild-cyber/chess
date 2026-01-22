@@ -79,24 +79,7 @@ public class ChessPiece {
                     {-1,1},
                     {-1,-1}
             };
-            for (int[] movement:directions) {
-                int row = myPosition.getRow() + movement[0];
-                int col = myPosition.getColumn() + movement[1];
-                while (row >= 1 && row <= 8 && col >= 1 && col <= 8) {
-                    ChessPosition newPosition = new ChessPosition(row,col);
-                    ChessPiece target = board.getPiece(newPosition);
-                    if (target == null) {
-                        moves.add(new ChessMove(myPosition,newPosition,null));
-                    } else {
-                        if (target.getTeamColor() != piece.getTeamColor()) {
-                            moves.add(new ChessMove(myPosition,newPosition, null));
-                        }
-                        break;
-                    }
-                    row += movement[0];
-                    col += movement[1];
-                }
-            }
+            movementRepeat(board, myPosition, moves, piece, directions);
         }
         if (piece.getPieceType() == PieceType.KING) {
             int[][] directions = {
@@ -174,6 +157,36 @@ public class ChessPiece {
                 }
             }
         }
+        if (piece.getPieceType() == PieceType.QUEEN) {
+            int[][] directions = {
+                    {1,1},{1,0},
+                    {1,-1},{-1,0},
+                    {-1,1},{0,1},
+                    {-1,-1},{0,-1}
+            };
+            movementRepeat(board, myPosition, moves, piece, directions);
+        }
         return moves;
+    }
+
+    private void movementRepeat(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> moves, ChessPiece piece, int[][] directions) {
+        for (int[] movement:directions) {
+            int row = myPosition.getRow() + movement[0];
+            int col = myPosition.getColumn() + movement[1];
+            while (row >= 1 && row <= 8 && col >= 1 && col <= 8) {
+                ChessPosition newPosition = new ChessPosition(row,col);
+                ChessPiece target = board.getPiece(newPosition);
+                if (target == null) {
+                    moves.add(new ChessMove(myPosition,newPosition,null));
+                } else {
+                    if (target.getTeamColor() != piece.getTeamColor()) {
+                        moves.add(new ChessMove(myPosition,newPosition, null));
+                    }
+                    break;
+                }
+                row += movement[0];
+                col += movement[1];
+            }
+        }
     }
 }
