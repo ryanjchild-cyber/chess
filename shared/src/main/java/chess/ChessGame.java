@@ -175,7 +175,7 @@ public class ChessGame {
             for (int c = 1; c <= 8; c++) {
                 ChessPosition position = new ChessPosition(r, c);
                 ChessPiece piece = board.getPiece(position);
-                //if (piece == null) continue;
+                if (piece == null) continue;
                 if (piece.getTeamColor()==teamColor&&piece.getPieceType()==ChessPiece.PieceType.KING) {
                     return position;
                 }
