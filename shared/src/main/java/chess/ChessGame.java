@@ -117,7 +117,7 @@ public class ChessGame {
      */
     public boolean isInCheckmate(TeamColor teamColor) {
         if (!isInCheck(teamColor)) return false;
-        return false;
+        return !teamHasLegalMoves(teamColor);
     }
 
     /**
@@ -128,7 +128,8 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        if (isInCheck(teamColor)) return false;
+        return !teamHasLegalMoves(teamColor);
     }
 
     /**
@@ -214,6 +215,19 @@ public class ChessGame {
     private boolean containsMove(Collection<ChessMove> moves,ChessMove target) {
         for (ChessMove move:moves) {
             if (move.equals(target)) {return true;}
+        }
+        return false;
+    }
+
+    private boolean teamHasLegalMoves(TeamColor teamColor) {
+        for (int r=1;r<=8;r++) {
+            for (int c=1;c<=8;c++) {
+                ChessPosition position=new ChessPosition(r,c);
+                ChessPiece piece=board.getPiece(position);
+                if (piece==null||piece.getTeamColor()!=teamColor) {continue;}
+                Collection<ChessMove> moves=validMoves(position);
+                if (moves!=null&&!moves.isEmpty()) {return true;}
+            }
         }
         return false;
     }
