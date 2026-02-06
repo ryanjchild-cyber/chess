@@ -105,7 +105,8 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        ChessPosition kingPosition = findKing(board, teamColor);
+        return isInCheckOnBoard(board,teamColor);
     }
 
     /**
@@ -115,7 +116,8 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        if (!isInCheck(teamColor)) return false;
+        return false;
     }
 
     /**
@@ -169,7 +171,7 @@ public class ChessGame {
         ChessPiece moving=board.getPiece(start);
         board.addPiece(start,null);
         if (move.getPromotionPiece() != null) {
-            moving=new ChessPiece(moving.getTeamColor(),move.getPromotionPiece());
+            moving= new ChessPiece(moving.getTeamColor(),move.getPromotionPiece());
         }
         board.addPiece(end,moving);
     }
