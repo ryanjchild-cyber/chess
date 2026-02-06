@@ -97,7 +97,7 @@ public class ChessPiece {
                 int row = myPosition.getRow() + movement[0];
                 int col = myPosition.getColumn() + movement[1];
                 if (row<1 || row>8 || col<1 || col>8) {
-                    break;
+                    continue;
                 }
                 ChessPosition newPosition = new ChessPosition(row,col);
                 ChessPiece target = board.getPiece(newPosition);

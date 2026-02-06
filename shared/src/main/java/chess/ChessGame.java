@@ -105,7 +105,6 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        ChessPosition kingPosition = findKing(board, teamColor);
         return isInCheckOnBoard(board,teamColor);
     }
 
@@ -152,14 +151,17 @@ public class ChessGame {
 
     private ChessBoard copyBoard(ChessBoard original) {
         ChessBoard copy=new ChessBoard();
+        for(int r=1;r<=8;r++) {
+            for (int c=1;c<=8;c++) {
+                copy.addPiece(new ChessPosition(r,c),null);
+            }
+        }
         for (int r=1; r<=8; r++) {
             for (int c=1; c<=8; c++) {
                 ChessPosition position= new ChessPosition(r,c);
                 ChessPiece piece=original.getPiece(position);
-                if (piece==null) {
-                    copy.addPiece(position,null);
-                } else {
-                    copy.addPiece(position,new ChessPiece(piece.getTeamColor(),piece.getPieceType()));
+                if (piece != null) {
+                    copy.addPiece(position, new ChessPiece(piece.getTeamColor(), piece.getPieceType()));
                 }
             }
         }
