@@ -70,7 +70,15 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-
+        if (move==null) {throw new InvalidMoveException("Move is null");}
+        ChessPosition start=move.getStartPosition();
+        ChessPiece piece = board.getPiece(start);
+        if (piece==null) {throw new InvalidMoveException("No piece at start position");}
+        if (piece.getTeamColor()!=teamTurn) {throw new InvalidMoveException("Not your turn");}
+        Collection<ChessMove> legalMoves=validMoves(start);
+        if (legalMoves==null||!containsMove(legalMoves,move)) {
+            throw new InvalidMoveException("Illegal move");
+        }
     }
 
     /**
@@ -182,5 +190,12 @@ public class ChessGame {
             }
         }
         return null;
+    }
+
+    private boolean containsMove(Collection<ChessMove> moves,ChessMove target) {
+        for (ChessMove move:moves) {
+            if (move.equals(target)) {return true;}
+        }
+        return false;
     }
 }
