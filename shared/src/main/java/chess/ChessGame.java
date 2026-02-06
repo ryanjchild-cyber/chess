@@ -1,5 +1,6 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -9,16 +10,18 @@ import java.util.Collection;
  * signature of the existing methods.
  */
 public class ChessGame {
+    private TeamColor teamTurn=TeamColor.WHITE;
+    private ChessBoard board= new ChessBoard();
 
     public ChessGame() {
-
+        board.resetBoard();
     }
 
     /**
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {
-        throw new RuntimeException("Not implemented");
+        return teamTurn;
     }
 
     /**
@@ -27,7 +30,7 @@ public class ChessGame {
      * @param team the team whose turn it is
      */
     public void setTeamTurn(TeamColor team) {
-        throw new RuntimeException("Not implemented");
+        this.teamTurn=team;
     }
 
     /**
@@ -46,7 +49,15 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        throw new RuntimeException("Not implemented");
+        ChessPiece piece=board.getPiece(startPosition);
+        if (piece==null) {return null;}
+        Collection<ChessMove> moveOptions=piece.pieceMoves(board,startPosition);
+        Collection<ChessMove> moves=new ArrayList<>();
+        for (ChessMove move:moveOptions) {
+            ChessBoard copy=copyBoard(board);
+
+        }
+        return moves;
     }
 
     /**
@@ -56,7 +67,7 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        throw new RuntimeException("Not implemented");
+
     }
 
     /**
@@ -96,7 +107,7 @@ public class ChessGame {
      * @param board the new board to use
      */
     public void setBoard(ChessBoard board) {
-        throw new RuntimeException("Not implemented");
+        this.board=board;
     }
 
     /**
@@ -105,6 +116,28 @@ public class ChessGame {
      * @return the chessboard
      */
     public ChessBoard getBoard() {
-        throw new RuntimeException("Not implemented");
+        return board;
+    }
+
+    private ChessBoard copyBoard(ChessBoard original) {
+        ChessBoard copy=new ChessBoard();
+        for (int r=0; r<=8; r++) {
+            for (int c=0; c<=8; c++) {
+                ChessPosition position= new ChessPosition(r,c);
+                ChessPiece piece=original.getPiece(position);
+                if (piece==null) {
+                    copy.addPiece(position,null);
+                } else {
+                    copy.addPiece(position,new ChessPiece(piece.getTeamColor(),piece.getPieceType()));
+                }
+            }
+        }
+        return copy;
+    }
+
+    private void applyMove(ChessBoard board, ChessMove move) {
+        ChessPosition start=move.getStartPosition();
+        ChessPosition end=move.getEndPosition();
+        ChessPiece moving=board.getPiece(start);
     }
 }
