@@ -1,7 +1,8 @@
 package server;
 import com.google.gson.Gson;
 import dataaccess.*;
-import io.javalin.*;
+import io.javalin.Javalin;
+import io.javalin.http.Context;
 import service.*;
 
 public class Server {
@@ -15,9 +16,12 @@ public class Server {
 
     public Server() {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
+        javalin.delete("/db",this::clear);
 
-        // Register your endpoints and exception handlers here.
-
+    }
+    private void clear(Context context) throws DataAccessException {
+        clearService.clear();
+        okEmpty(context);
     }
 
     public int run(int desiredPort) {
@@ -27,5 +31,10 @@ public class Server {
 
     public void stop() {
         javalin.stop();
+    }
+    private void okEmpty(Context context) {
+        context.status(200);
+        context.contentType("application/json");
+        context.result("{}");
     }
 }
