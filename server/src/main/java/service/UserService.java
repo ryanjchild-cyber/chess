@@ -36,7 +36,7 @@ public class UserService {
     }
     public void logout(String authToken) throws DataAccessException {
         if (isBlank(authToken)) throw new UnauthorizedException();
-        AuthData auth=dao.getAuth(authToken);
+        AuthData auth= dao.getAuth(authToken);
         if (auth==null) throw new UnauthorizedException();
         dao.deleteAuth(authToken);
     }
