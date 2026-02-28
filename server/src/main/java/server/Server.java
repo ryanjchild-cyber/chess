@@ -23,8 +23,8 @@ public class Server {
         javalin.post("/session",this::login);
         javalin.delete("/session",this::logout);
         javalin.get("/game",this::listGames);
-        javalin.post("/game",this::createGame);
-        javalin.put("/game",this::joinGame);
+        //javalin.post("/game",this::createGame);
+        //javalin.put("/game",this::joinGame);
         //exceptions
 
     }
@@ -68,7 +68,7 @@ public class Server {
     }
     private void okJson(Context context, Object object) {
         context.status(200);
-        context.contentType("applicatoin/json");
+        context.contentType("application/json");
         context.result(gson.toJson(object));
     }
 }
