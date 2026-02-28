@@ -30,14 +30,21 @@ public class UserService {
         if (user==null) {
             throw new UnauthorizedException();
         }
+        if (!user.password().equals(request.password())) {
+            throw new UnauthorizedException();
+        }
         String token=UUID.randomUUID().toString();
         dao.createAuth(new AuthData(token,request.username()));
         return new LoginResult(request.username(),token);
     }
     public void logout(String authToken) throws DataAccessException {
-        if (isBlank(authToken)) throw new UnauthorizedException();
+        if (authToken==null||authToken.isBlank()) {
+            throw new UnauthorizedException();
+        }
         AuthData auth= dao.getAuth(authToken);
-        if (auth==null) throw new UnauthorizedException();
+        if (auth==null) {
+            throw new UnauthorizedException();
+        }
         dao.deleteAuth(authToken);
     }
     private static boolean isBlank(String s) {

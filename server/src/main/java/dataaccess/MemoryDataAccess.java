@@ -40,7 +40,12 @@ public class MemoryDataAccess implements DataAccess {
     }
     @Override
     public void deleteAuth(String authToken) throws DataAccessException {
-        if (auths.remove(authToken)==null) throw new DataAccessException("unauthorized");
+        if (authToken==null||authToken.isBlank()) {
+            throw new DataAccessException("unauthorized");
+        }
+        if (auths.remove(authToken)==null) {
+            throw new DataAccessException("unauthorized");
+        }
     }
     @Override
     public int createGame(GameData game) throws DataAccessException {
