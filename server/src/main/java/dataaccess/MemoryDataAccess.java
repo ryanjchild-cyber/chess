@@ -20,7 +20,7 @@ public class MemoryDataAccess implements DataAccess {
     }
     @Override
     public void createUser(UserData user) throws DataAccessException {
-        if (user==null) throw new DataAccessException("User is null");
+        if (user==null) {throw new DataAccessException("User is null");}
         if (users.putIfAbsent(user.username(),user)!=null) {
             throw new DataAccessException("already taken");
         }
@@ -31,7 +31,7 @@ public class MemoryDataAccess implements DataAccess {
     }
     @Override
     public void createAuth(AuthData auth) throws DataAccessException {
-        if (auth==null) throw new DataAccessException("auth is null");
+        if (auth==null) {throw new DataAccessException("auth is null");}
         auths.put(auth.authToken(), auth);
     }
     @Override
@@ -49,7 +49,7 @@ public class MemoryDataAccess implements DataAccess {
     }
     @Override
     public int createGame(GameData game) throws DataAccessException {
-        if (game==null) throw new DataAccessException("game is null");
+        if (game==null) {throw new DataAccessException("game is null");}
         int id = nextGameID.getAndIncrement();
         games.put(id, new GameData(id,game.whiteUsername(),game.blackUsername(),game.gameName(),game.game()));
         return id;
@@ -64,8 +64,8 @@ public class MemoryDataAccess implements DataAccess {
     }
     @Override
     public void updateGame(GameData game) throws DataAccessException {
-        if (game == null) throw new DataAccessException("game is null");
-        if (!games.containsKey(game.gameID())) throw new DataAccessException("game not found");
+        if (game == null) {throw new DataAccessException("game is null");}
+        if (!games.containsKey(game.gameID())) {throw new DataAccessException("game not found");}
         games.put(game.gameID(), game);
     }
 }

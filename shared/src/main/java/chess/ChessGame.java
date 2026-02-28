@@ -73,12 +73,12 @@ public class ChessGame {
     }
 
     public boolean isInCheckmate(TeamColor teamColor) {
-        if (!isInCheck(teamColor)) return false;
+        if (!isInCheck(teamColor)) {return false;}
         return !teamHasLegalMoves(teamColor);
     }
 
     public boolean isInStalemate(TeamColor teamColor) {
-        if (isInCheck(teamColor)) return false;
+        if (isInCheck(teamColor)) {return false;}
         return !teamHasLegalMoves(teamColor);
     }
 
@@ -130,7 +130,7 @@ public class ChessGame {
             for (int c = 1; c <= 8; c++) {
                 ChessPosition position = new ChessPosition(r, c);
                 ChessPiece piece = board.getPiece(position);
-                if (piece == null || piece.getTeamColor() != opponent) continue;
+                if (piece == null || piece.getTeamColor() != opponent) {continue;}
                 for (ChessMove m : piece.pieceMoves(board, position)) {
                     if (kingPosition.equals(m.getEndPosition())) {
                         return true;
@@ -146,7 +146,7 @@ public class ChessGame {
             for (int c = 1; c <= 8; c++) {
                 ChessPosition position = new ChessPosition(r, c);
                 ChessPiece piece = board.getPiece(position);
-                if (piece == null) continue;
+                if (piece == null) {continue;}
                 if (piece.getTeamColor()==teamColor&&piece.getPieceType()==ChessPiece.PieceType.KING) {
                     return position;
                 }

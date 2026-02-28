@@ -43,17 +43,17 @@ public class GameService {
             throw new BadRequestException();
         }
         if (color.equals("WHITE")) {
-            if (game.whiteUsername()!=null) throw new ForbiddenException();
+            if (game.whiteUsername()!=null) {throw new ForbiddenException();}
             dao.updateGame(new GameData(game.gameID(),auth.username(),game.blackUsername(),game.gameName(),game.game()));
         } else {
-            if (game.blackUsername()!=null) throw new ForbiddenException();
+            if (game.blackUsername()!=null) {throw new ForbiddenException();}
             dao.updateGame(new GameData(game.gameID(),game.whiteUsername(),auth.username(),game.gameName(),game.game()));
         }
     }
     private AuthData requireAuth(String authToken) throws DataAccessException {
-        if (authToken==null||authToken.isBlank()) throw new UnauthorizedException();
+        if (authToken==null||authToken.isBlank()) {throw new UnauthorizedException();}
         AuthData auth=dao.getAuth(authToken);
-        if (auth==null) throw new UnauthorizedException();
+        if (auth==null) {throw new UnauthorizedException();}
         return auth;
     }
 }
