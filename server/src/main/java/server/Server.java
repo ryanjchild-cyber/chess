@@ -26,6 +26,31 @@ public class Server {
         javalin.post("/game",this::createGame);
         javalin.put("/game",this::joinGame);
         //exceptions
+        javalin.exception(BadRequestException.class, (e, context) -> {
+            context.status(400);
+            context.contentType("application/json");
+            context.result(gson.toJson(Map.of("message", "Error: bad request")));
+        });
+        javalin.exception(UnauthorizedException.class, (e, context) -> {
+            context.status(401);
+            context.contentType("application/json");
+            context.result(gson.toJson(Map.of("message", "Error: unauthorized")));
+        });
+        javalin.exception(ForbiddenException.class, (e, context) -> {
+            context.status(403);
+            context.contentType("application/json");
+            context.result(gson.toJson(Map.of("message", "Error: already taken")));
+        });
+        javalin.exception(DataAccessException.class, (e, context) -> {
+            context.status(500);
+            context.contentType("application/json");
+            context.result(gson.toJson(Map.of("message", "Error: "+safeMessage(e))));
+        });
+        javalin.exception(Exception.class, (e, context) -> {
+            context.status(500);
+            context.contentType("application/json");
+            context.result(gson.toJson(Map.of("message", "Error: "+safeMessage(e))));
+        });
     }
     private void clear(Context context) throws DataAccessException {
         clearService.clear();
@@ -81,5 +106,8 @@ public class Server {
         context.status(200);
         context.contentType("application/json");
         context.result(gson.toJson(object));
+    }
+    private static String safeMessage(Exception e) {
+        return (e.getMessage()==null||e.getMessage().isBlank())?"server error":e.getMessage();
     }
 }
