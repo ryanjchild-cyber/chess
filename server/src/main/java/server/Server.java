@@ -23,10 +23,9 @@ public class Server {
         javalin.post("/session",this::login);
         javalin.delete("/session",this::logout);
         javalin.get("/game",this::listGames);
-        //javalin.post("/game",this::createGame);
-        //javalin.put("/game",this::joinGame);
+        javalin.post("/game",this::createGame);
+        javalin.put("/game",this::joinGame);
         //exceptions
-
     }
     private void clear(Context context) throws DataAccessException {
         clearService.clear();
@@ -51,6 +50,18 @@ public class Server {
         String authToken=context.header("authorization");
         ListGamesResult result=gameService.listGames(authToken);
         okJson(context,result);
+    }
+    private void createGame(Context context) throws DataAccessException {
+        String authToken=context.header("authorization");
+        CreateGameRequest request=gson.fromJson(context.body(),CreateGameRequest.class);
+        CreateGameResult result=gameService.createGame(authToken,request);
+        okJson(context,result);
+    }
+    private void joinGame(Context context) throws DataAccessException {
+        String authToken=context.header("authorization");
+        JoinGameRequest request=gson.fromJson(context.body(),JoinGameRequest.class);
+        gameService.joinGame(authToken,request);
+        okEmpty(context);
     }
 
     public int run(int desiredPort) {
