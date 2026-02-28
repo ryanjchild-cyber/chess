@@ -127,16 +127,17 @@ public class ChessPiece {
             int row = myPosition.getRow();
             int col = myPosition.getColumn();
             int once = row+directions;
-            if (once >= 1 && once <= 8) {
-                ChessPosition singleStep = new ChessPosition(once, col);
-                if (board.getPiece(singleStep) == null) {
-                    pawnPromotion(moves, myPosition, singleStep, promotion);
-                    if (row == start) {
-                        int twice = row + 2 * directions;
-                        ChessPosition doubleStep = new ChessPosition(twice, col);
-                        if (board.getPiece(doubleStep) == null) {
-                            moves.add(new ChessMove(myPosition, doubleStep, null));
-                        }
+            if (once < 1 || once > 8) {
+                return moves;
+            }
+            ChessPosition singleStep = new ChessPosition(once, col);
+            if (board.getPiece(singleStep) == null) {
+                pawnPromotion(moves, myPosition, singleStep, promotion);
+                if (row == start) {
+                    int twice = row + 2 * directions;
+                    ChessPosition doubleStep = new ChessPosition(twice, col);
+                    if (board.getPiece(doubleStep) == null) {
+                        moves.add(new ChessMove(myPosition, doubleStep, null));
                     }
                 }
             }
@@ -145,7 +146,7 @@ public class ChessPiece {
                 int captureRow = row+directions;
                 int captureCol = col+diagonalColumn;
                 if(captureRow<1 || captureRow>8 || captureCol<1 || captureCol>8) {
-                    break;
+                    continue;
                 }
                 ChessPosition capturePosition = new ChessPosition(captureRow,captureCol);
                 ChessPiece target = board.getPiece(capturePosition);
