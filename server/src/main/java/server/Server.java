@@ -10,12 +10,20 @@ public class Server {
 
     private final Javalin javalin;
     private final Gson gson=new Gson();
-    private final DataAccess dao=new MemoryDataAccess();
-    private final ClearService clearService=new ClearService(dao);
-    private final UserService userService=new UserService(dao);
-    private final GameService gameService=new GameService(dao);
+    private final DataAccess dao;
+    private final ClearService clearService;
+    private final UserService userService;
+    private final GameService gameService;
 
     public Server() {
+        try {
+            dao=new MySQLDataAccess();
+        } catch (DataAccessException e) {
+            throw new RuntimeException("Unable to initialize database",e);
+        }
+        clearService=new ClearService(dao);
+        userService=new UserService(dao);
+        gameService=new GameService(dao);
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
         //endpoints
         javalin.delete("/db",this::clear);
