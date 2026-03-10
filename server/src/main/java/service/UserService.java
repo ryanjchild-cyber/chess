@@ -30,7 +30,7 @@ public class UserService {
         if (user==null) {
             throw new UnauthorizedException();
         }
-        if (!user.password().equals(request.password())) {
+        if (!dao.verifyUser(request.username(), request.password())) {
             throw new UnauthorizedException();
         }
         String token=UUID.randomUUID().toString();
