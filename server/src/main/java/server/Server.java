@@ -14,7 +14,6 @@ public class Server {
     private final ClearService clearService;
     private final UserService userService;
     private final GameService gameService;
-
     public Server() {
         try {
             dao=new MySQLDataAccess();
@@ -34,25 +33,25 @@ public class Server {
         javalin.post("/game",this::createGame);
         javalin.put("/game",this::joinGame);
         //exceptions
-        javalin.exception(BadRequestException.class, (e, context) -> {
+        javalin.exception(BadRequestException.class, (e,context) -> {
             context.status(400);
             context.contentType("application/json");
-            context.result(gson.toJson(Map.of("message", "Error: bad request")));
+            context.result(gson.toJson(Map.of("message","Error: bad request")));
         });
-        javalin.exception(UnauthorizedException.class, (e, context) -> {
+        javalin.exception(UnauthorizedException.class, (e,context) -> {
             context.status(401);
             context.contentType("application/json");
-            context.result(gson.toJson(Map.of("message", "Error: unauthorized")));
+            context.result(gson.toJson(Map.of("message","Error: unauthorized")));
         });
-        javalin.exception(ForbiddenException.class, (e, context) -> {
+        javalin.exception(ForbiddenException.class, (e,context) -> {
             context.status(403);
             context.contentType("application/json");
-            context.result(gson.toJson(Map.of("message", "Error: already taken")));
+            context.result(gson.toJson(Map.of("message","Error: already taken")));
         });
-        javalin.exception(DataAccessException.class, (e, context) -> {
+        javalin.exception(DataAccessException.class, (e,context) -> {
             context.status(500);
             context.contentType("application/json");
-            context.result(gson.toJson(Map.of("message", "Error: "+safeMessage(e))));
+            context.result(gson.toJson(Map.of("message","Error: "+safeMessage(e))));
         });
         javalin.exception(Exception.class, (e, context) -> {
             context.status(500);

@@ -3,7 +3,6 @@ import model.AuthData;
 import model.GameData;
 import model.UserData;
 import java.util.Collection;
-
 public interface DataAccess {
     void clear() throws DataAccessException;
     void createUser(UserData user) throws DataAccessException;

@@ -11,7 +11,6 @@ public class MemoryDataAccess implements DataAccess {
     private final Map<String, AuthData> auths = new ConcurrentHashMap<>();
     private final Map<Integer, GameData> games = new ConcurrentHashMap<>();
     private final AtomicInteger nextGameID = new AtomicInteger(1);
-
     @Override
     public void clear() {
         users.clear();
@@ -19,7 +18,6 @@ public class MemoryDataAccess implements DataAccess {
         games.clear();
         nextGameID.set(1);
     }
-
     @Override
     public void createUser(UserData user) throws DataAccessException {
         if (user == null) {
@@ -29,12 +27,10 @@ public class MemoryDataAccess implements DataAccess {
             throw new DataAccessException("already taken");
         }
     }
-
     @Override
     public UserData getUser(String username) {
         return users.get(username);
     }
-
     @Override
     public void createAuth(AuthData auth) throws DataAccessException {
         if (auth == null) {
@@ -42,12 +38,10 @@ public class MemoryDataAccess implements DataAccess {
         }
         auths.put(auth.authToken(), auth);
     }
-
     @Override
     public AuthData getAuth(String authToken) {
         return auths.get(authToken);
     }
-
     @Override
     public void deleteAuth(String authToken) throws DataAccessException {
         if (authToken == null || authToken.isBlank()) {
@@ -57,7 +51,6 @@ public class MemoryDataAccess implements DataAccess {
             throw new DataAccessException("unauthorized");
         }
     }
-
     @Override
     public int createGame(GameData game) throws DataAccessException {
         if (game == null) {
@@ -67,17 +60,14 @@ public class MemoryDataAccess implements DataAccess {
         games.put(id, new GameData(id, game.whiteUsername(), game.blackUsername(), game.gameName(), game.game()));
         return id;
     }
-
     @Override
     public GameData getGame(int gameID) {
         return games.get(gameID);
     }
-
     @Override
     public Collection<GameData> listGames() {
         return games.values();
     }
-
     @Override
     public void updateGame(GameData game) throws DataAccessException {
         if (game == null) {
@@ -88,7 +78,6 @@ public class MemoryDataAccess implements DataAccess {
         }
         games.put(game.gameID(), game);
     }
-
     @Override
     public boolean verifyUser(String username, String clearTextPassword) throws DataAccessException {
         UserData user = getUser(username);
