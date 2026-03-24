@@ -54,9 +54,38 @@ public class ServerFacade {
         makeRequest("DELETE","/db",null,null,null);
     }
     public <T> T makeRequest(String method,String path,String authToken,Object requestBody,Class<T> responseClass) throws Exception {
-
+        URL url=URI.create(serverUrl+path).toURL();
+        HttpURLConnection connection=(HttpURLConnection) url.openConnection();
+        connection.setRequestMethod(method);
+        connection.setDoInput(true);
+        if (authToken!=null) {
+            connection.setRequestProperty("Authorization",authToken);
+        }
+        if (requestBody!=null) {
+            connection.setDoOutput(true);
+            connection.setRequestProperty("Content-Type","application/json");
+            String json=gson.toJson(requestBody);
+            try (OutputStream reqBody=connection.getOutputStream()) {
+                reqBody.write(json.getBytes(StandardCharsets.UTF_8));
+            }
+        }
+        connection.connect();
+        int status=connection.getResponseCode();
+        boolean success=status/100==2;
+        InputStream stream=success?connection.getInputStream():connection.getErrorStream();
+        String responseJson="";
+        if (stream!=null) {
+            responseJson=new String(stream.readAllBytes(),StandardCharsets.UTF_8);
+        }
+        if (!success) {
+            String message = extractErrorMessage(responseJson);
+            throw new ClientException(status,message);
+        }
+        if (responseClass==null||responseJson.isBlank()) {
+            return null;
+        }
+        return gson.fromJson(responseJson, responseClass);
     }
-
     private record CreateGameResponse(int gameID) {}
     private record ListGamesResponse(List<GameData> games) {}
 
