@@ -43,6 +43,20 @@ public class ServerFacade {
         var response = makeRequest("GET", "/game", authToken, null, ListGamesResponse.class);
         return response.games();
     }
+    public void joinGame(String authToken,String playerColor,int gameID) throws Exception {
+        var body=Map.of(
+                "playerColor",playerColor,
+                "gameID",gameID
+        );
+        makeRequest("PUT","/game",authToken,body,null);
+    }
+    public void clear() throws Exception {
+        makeRequest("DELETE","/db",null,null,null);
+    }
+    public <T> T makeRequest(String method,String path,String authToken,Object requestBody,Class<T> responseClass) throws Exception {
+
+    }
+
     private record CreateGameResponse(int gameID) {}
     private record ListGamesResponse(List<GameData> games) {}
 
