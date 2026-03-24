@@ -34,5 +34,16 @@ public class ServerFacade {
     public void logout(String authToken) throws Exception {
         makeRequest("DELETE","/session",authToken,null,null);
     }
+    public Integer createGame(String authToken,String gameName) throws Exception {
+        var body = Map.of("gameName",gameName);
+        var response = makeRequest("POST", "/game",authToken,body,CreateGameResponse.class);
+        return response.gameID();
+    }
+    public List<GameData> listGames(String authToken) throws Exception {
+        var response = makeRequest("GET", "/game", authToken, null, ListGamesResponse.class);
+        return response.games();
+    }
+    private record CreateGameResponse(int gameID) {}
+    private record ListGamesResponse(List<GameData> games) {}
 
 }
