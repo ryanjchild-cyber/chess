@@ -86,7 +86,17 @@ public class ServerFacade {
         }
         return gson.fromJson(responseJson, responseClass);
     }
+    private String extractErrorMessage(String json) {
+        try {
+            var map=gson.fromJson(json,Map.class);
+            Object message=map.get("message");
+            if (message!=null) {
+                return message.toString();
+            }
+        } catch (Exception ignored) {
+        }
+        return "Request failed";
+    }
     private record CreateGameResponse(int gameID) {}
     private record ListGamesResponse(List<GameData> games) {}
-
 }
