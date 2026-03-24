@@ -24,4 +24,15 @@ public class ServerFacade {
         );
         return makeRequest("POST","/user",null,body,AuthData.class);
     }
+    public AuthData login(String username,String password) throws Exception {
+        var body=Map.of(
+                "username",username,
+                "password",password
+        );
+        return makeRequest("POST", "/session",null,body,AuthData.class);
+    }
+    public void logout(String authToken) throws Exception {
+        makeRequest("DELETE","/session",authToken,null,null);
+    }
+
 }
