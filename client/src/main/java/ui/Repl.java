@@ -100,14 +100,14 @@ public class Repl {
             System.out.println("Unable to login: "+cleanMessage(ex.getMessage()));
         }
     }
-    private logout() {
+    private void logout() {
         try {
             server.logout(auth.authToken());
-            auth=null;
+            auth = null;
             lastListedGames.clear();
             System.out.println("Logged out.");
         } catch (Exception ex) {
-            System.out.println("Unable to logout: "+cleanMessage(ex.getMessage()));
+            System.out.println("Unable to logout: " + cleanMessage(ex.getMessage()));
         }
     }
     private void createGame() {
@@ -173,6 +173,29 @@ public class Repl {
             System.out.println("Unable to join game: "+cleanMessage(ex.getMessage()));
         }
     }
+    private void observeGame() {
+        if (lastListedGames.isEmpty()) {
+            System.out.println("List games first.");
+            return;
+        }
+        System.out.print("game number: ");
+        Integer number=readInt();
+        if (number==null||number<1||number>lastListedGames.size()) {
+            System.out.println("Invalid game number.");
+            return;
+        }
+        GameData selected=lastListedGames.get(number-1);
+        System.out.println("Observing game: "+selected.gameName());
+        ChessBoardUI.draw(new ChessGame(),ChessGame.TeamColor.WHITE);
+    }
+    private Integer readInt() {
+        String text=scanner.nextLine().trim();
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
     private void printPreloginHelp() {
         System.out.println("""
                 help         - show available commands
@@ -191,5 +214,14 @@ public class Repl {
                 logout       - log out
                 quit         - exit the program
                 """);
+    }
+    private String blankAsOpen(String name) {
+        return (name==null||name.isBlank())?"<open>":name;
+    }
+    private String cleanMessage(String message) {
+        if (message==null||message.isBlank()) {
+            return "Something went wrong.";
+        }
+        return message.replace("Error: ","");
     }
 }
