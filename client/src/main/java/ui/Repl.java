@@ -110,6 +110,69 @@ public class Repl {
             System.out.println("Unable to logout: "+cleanMessage(ex.getMessage()));
         }
     }
+    private void createGame() {
+        System.out.print("game name: ");
+        String gameName=scanner.nextLine().trim();
+        if (gameName.isBlank()) {
+            System.out.println("Game name is required.");
+            return;
+        }
+        try {
+            server.createGame(auth.authToken(),gameName);
+            System.out.println("Game created.");
+        } catch (Exception ex) {
+            System.out.println("Unable to create game: "+cleanMessage(ex.getMessage()));
+        }
+    }
+    private void listGames() {
+        try {
+            lastListedGames.clear();
+            lastListedGames.addAll(server.listGames(auth.authToken()));
+            if (lastListedGames.isEmpty()) {
+                System.out.println("No games found.");
+                return;
+            }
+            for (int i=0;i<lastListedGames.size();i++) {
+                GameData game=lastListedGames.get(i);
+                String white=blankAsOpen(game.whiteUsername());
+                String black=blankAsOpen(game.blackUsername());
+                System.out.printf("%d. %s | White: %s | Black: %s%n",
+                        i+1,game.gameName(),white,black);
+            }
+        } catch (Exception ex) {
+            System.out.println("Unable to list games: "+cleanMessage(ex.getMessage()));
+        }
+    }
+    private void playGame() {
+        if (lastListedGames.isEmpty()) {
+            System.out.println("List games first.");
+            return;
+        }
+        System.out.print("game number: ");
+        Integer number=readInt();
+        if (number==null||number<1||number>lastListedGames.size()) {
+            System.out.println("Invalid game number.");
+            return;
+        }
+        System.out.print("coloe (WHTIE or BLACK): ");
+        String color=scanner.nextLine().trim().toUpperCase(Locale.ROOT);
+        if (!color.equals("WHITE")&&!color.equals("BLACK")) {
+            System.out.println("Color must be WHITE or BLACK.");
+            return;
+        }
+        GameData selected=lastListedGames.get(number-1);
+        try {
+            server.joinGame(auth.authToken(),color,selected.gameID());
+            System.out.println("Joined game: "+selected.gameName());
+            if (color.equals("WHITE")) {
+                ChessBoardUI.draw(new ChessGame(),ChessGame.TeamColor.WHITE);
+            } else {
+                ChessBoardUI.draw(new ChessGame(), ChessGame.TeamColor.BLACK);
+            }
+        } catch (Exception ex) {
+            System.out.println("Unable to join game: "+cleanMessage(ex.getMessage()));
+        }
+    }
     private void printPreloginHelp() {
         System.out.println("""
                 help         - show available commands
