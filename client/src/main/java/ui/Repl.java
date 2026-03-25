@@ -47,4 +47,22 @@ public class Repl {
         }
         return true;
     }
+    private void register() {
+        System.out.print("username: ");
+        String username=scanner.nextLine().trim();
+        System.out.print("password: ");
+        String password=scanner.nextLine().trim();
+        System.out.print("email: ");
+        String email=scanner.nextLine().trim();
+        if (username.isBlank()||password.isBlank()||email.isBlank()) {
+            System.out.println("All fields are required.");
+            return;
+        }
+        try {
+            auth=server.register(username,password,email);
+            System.out.println("Registered and logged in as "+username);
+        } catch (Exception ex) {
+            System.out.println("Unable to register: "+cleanMessage(ex.getMessage()));
+        }
+    }
 }
