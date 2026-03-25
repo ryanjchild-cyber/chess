@@ -6,7 +6,7 @@ public class ClientException extends Exception {
         super(message);
         this.statusCode=statusCode;
     }
-    public int StatusCode() {
+    public int statusCode() {
         return statusCode;
     }
 }
