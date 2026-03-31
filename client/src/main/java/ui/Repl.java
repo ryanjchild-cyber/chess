@@ -154,7 +154,7 @@ public class Repl {
             System.out.println("Invalid game number.");
             return;
         }
-        System.out.print("coloe (WHTIE or BLACK): ");
+        System.out.print("color (WHITE or BLACK): ");
         String color=scanner.nextLine().trim().toUpperCase(Locale.ROOT);
         if (!color.equals("WHITE")&&!color.equals("BLACK")) {
             System.out.println("Color must be WHITE or BLACK.");
@@ -199,7 +199,7 @@ public class Repl {
     private void printPreloginHelp() {
         System.out.println("""
                 help         - show available commands
-                login        -log into an existing account
+                login        - log into an existing account
                 register     - create a new account
                 quit         - exit the program
                 """);
