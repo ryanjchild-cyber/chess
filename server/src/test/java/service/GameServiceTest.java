@@ -1,9 +1,18 @@
 package service;
 import dataaccess.DataAccess;
 import dataaccess.MemoryDataAccess;
-import org.eclipse.jetty.server.Authentication;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import service.exceptions.ForbiddenException;
+import service.exceptions.UnauthorizedException;
+import service.requests.CreateGameRequest;
+import service.requests.JoinGameRequest;
+import service.requests.RegisterRequest;
+import service.results.CreateGameResult;
+import service.results.ListGamesResult;
+import service.services.GameService;
+import service.services.UserService;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class GameServiceTest {

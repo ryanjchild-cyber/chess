@@ -2,10 +2,15 @@ package service;
 import dataaccess.*;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
-import service.LoginRequest;
-import service.RegisterRequest;
-import service.RegisterResult;
-import service.LoginResult;
+
+import service.exceptions.ForbiddenException;
+import service.exceptions.UnauthorizedException;
+import service.requests.LoginRequest;
+import service.requests.RegisterRequest;
+import service.results.LoginResult;
+import service.results.RegisterResult;
+import service.services.UserService;
+
 public class UserServiceTest {
     private UserService userService;
     @BeforeEach

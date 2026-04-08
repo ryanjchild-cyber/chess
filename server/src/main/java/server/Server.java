@@ -3,7 +3,21 @@ import com.google.gson.Gson;
 import dataaccess.*;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
-import service.*;
+import service.exceptions.BadRequestException;
+import service.exceptions.ForbiddenException;
+import service.exceptions.UnauthorizedException;
+import service.requests.CreateGameRequest;
+import service.requests.JoinGameRequest;
+import service.requests.LoginRequest;
+import service.requests.RegisterRequest;
+import service.results.CreateGameResult;
+import service.results.ListGamesResult;
+import service.results.LoginResult;
+import service.results.RegisterResult;
+import service.services.ClearService;
+import service.services.GameService;
+import service.services.UserService;
+
 import java.util.Map;
 
 public class Server {
@@ -33,17 +47,17 @@ public class Server {
         javalin.post("/game",this::createGame);
         javalin.put("/game",this::joinGame);
         //exceptions
-        javalin.exception(BadRequestException.class, (e,context) -> {
+        javalin.exception(BadRequestException.class, (e, context) -> {
             context.status(400);
             context.contentType("application/json");
             context.result(gson.toJson(Map.of("message","Error: bad request")));
         });
-        javalin.exception(UnauthorizedException.class, (e,context) -> {
+        javalin.exception(UnauthorizedException.class, (e, context) -> {
             context.status(401);
             context.contentType("application/json");
             context.result(gson.toJson(Map.of("message","Error: unauthorized")));
         });
-        javalin.exception(ForbiddenException.class, (e,context) -> {
+        javalin.exception(ForbiddenException.class, (e, context) -> {
             context.status(403);
             context.contentType("application/json");
             context.result(gson.toJson(Map.of("message","Error: already taken")));

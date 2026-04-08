@@ -3,6 +3,14 @@ import dataaccess.DataAccess;
 import dataaccess.MemoryDataAccess;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import service.exceptions.UnauthorizedException;
+import service.requests.CreateGameRequest;
+import service.requests.RegisterRequest;
+import service.results.RegisterResult;
+import service.services.ClearService;
+import service.services.GameService;
+import service.services.UserService;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ClearServiceTest {

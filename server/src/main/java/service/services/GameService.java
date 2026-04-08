@@ -1,9 +1,18 @@
-package service;
+package service.services;
 import chess.ChessGame;
 import dataaccess.DataAccessException;
 import dataaccess.DataAccess;
 import model.AuthData;
 import model.GameData;
+import service.GameSummary;
+import service.exceptions.BadRequestException;
+import service.exceptions.ForbiddenException;
+import service.exceptions.UnauthorizedException;
+import service.requests.CreateGameRequest;
+import service.requests.JoinGameRequest;
+import service.results.CreateGameResult;
+import service.results.ListGamesResult;
+
 import java.util.ArrayList;
 
 public class GameService {

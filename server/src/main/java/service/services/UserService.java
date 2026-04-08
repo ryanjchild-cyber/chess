@@ -1,8 +1,16 @@
-package service;
+package service.services;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import model.AuthData;
 import model.UserData;
+import service.exceptions.BadRequestException;
+import service.exceptions.ForbiddenException;
+import service.exceptions.UnauthorizedException;
+import service.requests.LoginRequest;
+import service.requests.RegisterRequest;
+import service.results.LoginResult;
+import service.results.RegisterResult;
+
 import java.util.UUID;
 
 public class UserService {
