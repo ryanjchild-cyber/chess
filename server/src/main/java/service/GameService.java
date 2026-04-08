@@ -26,7 +26,7 @@ public class GameService {
             throw new BadRequestException();
         }
         ChessGame game=new ChessGame();
-        int id=dao.createGame(new GameData(0,null,null,request.gameName(),game));
+        int id = dao.createGame(new GameData(0, null, null, request.gameName(), game, false));
         return new CreateGameResult(id);
     }
     public void joinGame(String authToken, JoinGameRequest request) throws DataAccessException {
@@ -44,10 +44,24 @@ public class GameService {
         }
         if (color.equals("WHITE")) {
             if (game.whiteUsername()!=null) {throw new ForbiddenException();}
-            dao.updateGame(new GameData(game.gameID(),auth.username(),game.blackUsername(),game.gameName(),game.game()));
+            dao.updateGame(new GameData(
+                    game.gameID(),
+                    auth.username(),
+                    game.blackUsername(),
+                    game.gameName(),
+                    game.game(),
+                    game.gameOver()
+            ));
         } else {
             if (game.blackUsername()!=null) {throw new ForbiddenException();}
-            dao.updateGame(new GameData(game.gameID(),game.whiteUsername(),auth.username(),game.gameName(),game.game()));
+            dao.updateGame(new GameData(
+                    game.gameID(),
+                    game.whiteUsername(),
+                    auth.username(),
+                    game.gameName(),
+                    game.game(),
+                    game.gameOver()
+            ));
         }
     }
     private AuthData requireAuth(String authToken) throws DataAccessException {
