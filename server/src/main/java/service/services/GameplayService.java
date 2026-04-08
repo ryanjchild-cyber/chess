@@ -2,19 +2,22 @@ package service.services;
 import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPosition;
-import chess.InvalidMoveException;
+import com.google.gson.Gson;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import io.javalin.websocket.WsContext;
 import model.AuthData;
 import model.GameData;
 import server.ConnectionManager;
-import service.exceptions.*;
+import service.exceptions.BadRequestException;
+import service.exceptions.ForbiddenException;
+import service.exceptions.UnauthorizedException;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
 public class GameplayService {
     private final DataAccess dao;
     private final ConnectionManager connections;
+    private final Gson gson = new Gson();
     public GameplayService(DataAccess dao, ConnectionManager connections) {
         this.dao = dao;
         this.connections = connections;
@@ -25,19 +28,16 @@ public class GameplayService {
         ConnectionManager.Role role = roleForUser(auth.username(), game);
         connections.add(session, gameID, auth.username(), role);
         send(session, new LoadGameMessage(game));
-        String connectMessage = switch (role) {
+        String msg = switch (role) {
             case WHITE -> auth.username() + " connected as white";
             case BLACK -> auth.username() + " connected as black";
             case OBSERVER -> auth.username() + " connected as an observer";
         };
-        notifyOthers(gameID, session, connectMessage);
+        notifyOthers(gameID, session, msg);
     }
-    public void makeMove(String authToken, Integer gameID, ChessMove move, WsContext session) throws DataAccessException, InvalidMoveException {
+    public void makeMove(String authToken, Integer gameID, ChessMove move, WsContext session) throws DataAccessException {
         AuthData auth = requireAuth(authToken);
         GameData gameData = requireGame(gameID);
-        if (gameData.gameOver()) {
-            throw new BadRequestException("Error: game is already over");
-        }
         ConnectionManager.Role role = roleForUser(auth.username(), gameData);
         if (role == ConnectionManager.Role.OBSERVER) {
             throw new ForbiddenException("Error: observers cannot make moves");
@@ -50,28 +50,19 @@ public class GameplayService {
             throw new ForbiddenException("Error: not your turn");
         }
         game.makeMove(move);
-        boolean nowOver = game.isInCheckmate(game.getTeamTurn()) || game.isInStalemate(game.getTeamTurn());
-        GameData updated = new GameData(
-                gameData.gameID(),
-                gameData.whiteUsername(),
-                gameData.blackUsername(),
-                gameData.gameName(),
-                game,
-                nowOver
-        );
-        dao.updateGame(updated);
-        broadcastGame(gameID, updated);
+        dao.updateGame(gameData);
+        broadcastGame(gameID, gameData);
         notifyOthers(gameID, session, auth.username() + " made move " + moveToString(move));
         if (game.isInCheck(game.getTeamTurn()) && !game.isInCheckmate(game.getTeamTurn())) {
             String checkedPlayer = game.getTeamTurn() == ChessGame.TeamColor.WHITE
-                    ? updated.whiteUsername()
-                    : updated.blackUsername();
+                    ? gameData.whiteUsername()
+                    : gameData.blackUsername();
             broadcastNotification(gameID, checkedPlayer + " is in check");
         }
         if (game.isInCheckmate(game.getTeamTurn())) {
             String matedPlayer = game.getTeamTurn() == ChessGame.TeamColor.WHITE
-                    ? updated.whiteUsername()
-                    : updated.blackUsername();
+                    ? gameData.whiteUsername()
+                    : gameData.blackUsername();
             broadcastNotification(gameID, matedPlayer + " is in checkmate");
         }
         if (game.isInStalemate(game.getTeamTurn())) {
@@ -80,51 +71,17 @@ public class GameplayService {
     }
     public void leave(String authToken, Integer gameID, WsContext session) throws DataAccessException {
         AuthData auth = requireAuth(authToken);
-        GameData game = requireGame(gameID);
-        GameData updated = game;
-        if (auth.username().equals(game.whiteUsername())) {
-            updated = new GameData(
-                    game.gameID(),
-                    null,
-                    game.blackUsername(),
-                    game.gameName(),
-                    game.game(),
-                    game.gameOver()
-            );
-            dao.updateGame(updated);
-        } else if (auth.username().equals(game.blackUsername())) {
-            updated = new GameData(
-                    game.gameID(),
-                    game.whiteUsername(),
-                    null,
-                    game.gameName(),
-                    game.game(),
-                    game.gameOver()
-            );
-            dao.updateGame(updated);
-        }
+        requireGame(gameID);
         connections.remove(session);
         notifyOthers(gameID, session, auth.username() + " left the game");
     }
     public void resign(String authToken, Integer gameID, WsContext session) throws DataAccessException {
         AuthData auth = requireAuth(authToken);
         GameData game = requireGame(gameID);
-        if (game.gameOver()) {
-            throw new BadRequestException("Error: game is already over");
-        }
         ConnectionManager.Role role = roleForUser(auth.username(), game);
         if (role == ConnectionManager.Role.OBSERVER) {
             throw new ForbiddenException("Error: observers cannot resign");
         }
-        GameData updated = new GameData(
-                game.gameID(),
-                game.whiteUsername(),
-                game.blackUsername(),
-                game.gameName(),
-                game.game(),
-                true
-        );
-        dao.updateGame(updated);
         broadcastNotification(gameID, auth.username() + " resigned the game");
     }
     private AuthData requireAuth(String authToken) throws DataAccessException {
@@ -177,7 +134,7 @@ public class GameplayService {
         }
     }
     private void send(WsContext session, Object message) {
-        session.send(new com.google.gson.Gson().toJson(message));
+        session.send(gson.toJson(message));
     }
     private String moveToString(ChessMove move) {
         return posToString(move.getStartPosition()) + "-" + posToString(move.getEndPosition());

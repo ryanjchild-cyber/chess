@@ -1,27 +1,37 @@
 package server;
+
 import com.google.gson.Gson;
 import io.javalin.websocket.WsContext;
-import service.services.GameplayService;
 import service.exceptions.*;
+import service.services.GameplayService;
 import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
+
 public class WebSocketHandler {
     private final Gson gson = new Gson();
     private final GameplayService gameplayService;
+
     public WebSocketHandler(GameplayService gameplayService) {
         this.gameplayService = gameplayService;
     }
+
     public void onMessage(WsContext ctx) {
         try {
             UserGameCommand base = gson.fromJson(ctx.message(), UserGameCommand.class);
+
             switch (base.getCommandType()) {
                 case CONNECT -> gameplayService.connect(base.getAuthToken(), base.getGameID(), ctx);
                 case LEAVE -> gameplayService.leave(base.getAuthToken(), base.getGameID(), ctx);
                 case RESIGN -> gameplayService.resign(base.getAuthToken(), base.getGameID(), ctx);
                 case MAKE_MOVE -> {
                     MakeMoveCommand moveCommand = gson.fromJson(ctx.message(), MakeMoveCommand.class);
-                    gameplayService.makeMove(moveCommand.getAuthToken(), moveCommand.getGameID(), moveCommand.getMove(), ctx);
+                    gameplayService.makeMove(
+                            moveCommand.getAuthToken(),
+                            moveCommand.getGameID(),
+                            moveCommand.getMove(),
+                            ctx
+                    );
                 }
             }
         } catch (UnauthorizedException | ForbiddenException | BadRequestException ex) {
@@ -30,11 +40,19 @@ public class WebSocketHandler {
             sendError(ctx, "Error: " + ex.getMessage());
         }
     }
+
+    public void onClose(WsContext ctx) {
+        // optional
+    }
+
+    public void onError(WsContext ctx) {
+        // optional
+    }
+
     private void sendError(WsContext ctx, String message) {
-        ctx.send(gson.toJson(new ErrorMessage(
-                message != null && message.toLowerCase().contains("error")
-                        ? message
-                        : "Error: " + message
-        )));
+        if (message == null || !message.toLowerCase().contains("error")) {
+            message = "Error: " + message;
+        }
+        ctx.send(gson.toJson(new ErrorMessage(message)));
     }
 }
