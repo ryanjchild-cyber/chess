@@ -34,12 +34,23 @@ public class ConnectionManager {
     }
     private final ConcurrentHashMap<Integer, Set<Connection>> connections = new ConcurrentHashMap<>();
     public void add(WsContext session, int gameID, String username, Role role) {
-        connections.computeIfAbsent(gameID, k -> ConcurrentHashMap.newKeySet())
-                .add(new Connection(session, gameID, username, role));
+        Set<Connection> gameConnections =
+                connections.computeIfAbsent(gameID, k -> ConcurrentHashMap.newKeySet());
+        gameConnections.removeIf(connection ->
+                connection.getUsername().equals(username) ||
+                        connection.getSession().sessionId().equals(session.sessionId())
+        );
+        gameConnections.add(new Connection(session, gameID, username, role));
     }
     public void remove(WsContext session) {
-        for (Set<Connection> gameConnections : connections.values()) {
-            gameConnections.removeIf(connection -> connection.getSession()==session);
+        for (var entry : connections.entrySet()) {
+            Set<Connection> gameConnections = entry.getValue();
+            gameConnections.removeIf(connection ->
+                    connection.getSession().sessionId().equals(session.sessionId())
+            );
+            if (gameConnections.isEmpty()) {
+                connections.remove(entry.getKey(), gameConnections);
+            }
         }
     }
     public Set<Connection> getGameConnections(int gameID) {

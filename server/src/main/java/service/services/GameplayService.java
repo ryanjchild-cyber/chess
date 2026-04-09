@@ -37,6 +37,9 @@ public class GameplayService {
         AuthData auth = requireAuth(authToken);
         GameData gameData = requireGame(gameID);
         ConnectionManager.Role role = roleForUser(auth.username(), gameData);
+        if (gameData.gameOver()) {
+            throw new ForbiddenException("Error: game already over");
+        }
         if (role == ConnectionManager.Role.OBSERVER) {
             throw new ForbiddenException("Error: observers cannot make moves");
         }
@@ -81,9 +84,33 @@ public class GameplayService {
     }
     public void leave(String authToken, Integer gameID, WsContext session) throws DataAccessException {
         AuthData auth = requireAuth(authToken);
-        requireGame(gameID);
+        GameData game = requireGame(gameID);
+        ConnectionManager.Role role = roleForUser(auth.username(), game);
         connections.remove(session);
+        if (role == ConnectionManager.Role.WHITE) {
+            dao.updateGame(new GameData(
+                    game.gameID(),
+                    null,
+                    game.blackUsername(),
+                    game.gameName(),
+                    game.game(),
+                    game.gameOver()
+            ));
+        } else if (role == ConnectionManager.Role.BLACK) {
+            dao.updateGame(new GameData(
+                    game.gameID(),
+                    game.whiteUsername(),
+                    null,
+                    game.gameName(),
+                    game.game(),
+                    game.gameOver()
+            ));
+        }
         notifyOthers(gameID, auth.username(), auth.username() + " left the game");
+        try {
+            session.session.close();
+        } catch (Exception ignored) {
+        }
     }
     public void resign(String authToken, Integer gameID, WsContext session) throws DataAccessException {
         AuthData auth = requireAuth(authToken);
@@ -92,6 +119,18 @@ public class GameplayService {
         if (role == ConnectionManager.Role.OBSERVER) {
             throw new ForbiddenException("Error: observers cannot resign");
         }
+        if (game.gameOver()) {
+            throw new ForbiddenException("Error: game already over");
+        }
+        GameData updatedGame = new GameData(
+                game.gameID(),
+                game.whiteUsername(),
+                game.blackUsername(),
+                game.gameName(),
+                game.game(),
+                true
+        );
+        dao.updateGame(updatedGame);
         broadcastNotification(gameID, auth.username() + " resigned the game");
     }
     private AuthData requireAuth(String authToken) throws DataAccessException {
