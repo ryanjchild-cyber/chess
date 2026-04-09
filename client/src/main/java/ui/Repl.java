@@ -303,22 +303,18 @@ public class Repl {
     }
     private void makeMove() {
         try {
-            System.out.print("from (row col): ");
-            int r1 = scanner.nextInt();
-            int c1 = scanner.nextInt();
-            System.out.print("to (row col): ");
-            int r2 = scanner.nextInt();
-            int c2 = scanner.nextInt();
-            scanner.nextLine();
+            System.out.print("from (e.g. e2): ");
+            String from = scanner.nextLine().trim().toLowerCase();
+            System.out.print("to (e.g. e4): ");
+            String to = scanner.nextLine().trim().toLowerCase();
             ChessMove move = new ChessMove(
-                    new ChessPosition(r1, c1),
-                    new ChessPosition(r2, c2),
+                    parsePosition(from),
+                    parsePosition(to),
                     null
             );
             ws.makeMove(auth.authToken(), currentGameID, move);
         } catch (Exception e) {
             System.out.println("Invalid move input.");
-            scanner.nextLine();
         }
     }
     private void highlight() {
@@ -343,5 +339,18 @@ public class Repl {
             resign     - resign game
             highlight  - highlight moves
             """);
+    }
+    private ChessPosition parsePosition(String pos) {
+        if (pos.length() != 2) {
+            throw new IllegalArgumentException("Invalid format");
+        }
+        char file = pos.charAt(0); // a-h
+        char rank = pos.charAt(1); // 1-8
+        int col = file - 'a' + 1;
+        int row = Character.getNumericValue(rank);
+        if (col < 1 || col > 8 || row < 1 || row > 8) {
+            throw new IllegalArgumentException("Out of bounds");
+        }
+        return new ChessPosition(row, col);
     }
 }
