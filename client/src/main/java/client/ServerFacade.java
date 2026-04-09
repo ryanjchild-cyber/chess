@@ -100,6 +100,11 @@ public class ServerFacade {
         }
         return "Request failed";
     }
+
+    public String getServerUrl() {
+        return serverUrl;
+    }
+
     private record CreateGameResponse(int gameID) {}
     private record ListGamesResponse(List<GameData> games) {}
 }
