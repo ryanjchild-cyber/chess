@@ -8,7 +8,6 @@ import java.net.URI;
 public class WebSocketFacade extends Endpoint {
     public interface Listener {
         void onMessage(String message);
-        void onError(String error);
     }
     private final Session session;
     private final Gson gson = new Gson();

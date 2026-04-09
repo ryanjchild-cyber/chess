@@ -19,16 +19,16 @@ public class UserService {
         this.dao=dao;
     }
     public RegisterResult register(RegisterRequest request) throws DataAccessException {
-        if (request==null||isBlank(request.username())||isBlank(request.password())||isBlank(request.email())) {
+        if (request == null || isBlank(request.username()) || isBlank(request.password()) || isBlank(request.email())) {
             throw new BadRequestException();
         }
-        if (dao.getUser(request.username())!=null) {
+        if (dao.getUser(request.username()) != null) {
             throw new ForbiddenException();
         }
-        dao.createUser(new UserData(request.username(),request.password(),request.email()));
-        String token=UUID.randomUUID().toString();
-        dao.createAuth(new AuthData(token,request.username()));
-        return new RegisterResult(request.username(),token);
+        dao.createUser(new UserData(request.username(), request.password(), request.email()));
+        String token = UUID.randomUUID().toString();
+        dao.createAuth(new AuthData(token, request.username()));
+        return new RegisterResult(request.username(), token);
     }
     public LoginResult login(LoginRequest request) throws DataAccessException {
         if (request == null || isBlank(request.username()) || isBlank(request.password())) {
@@ -38,7 +38,11 @@ public class UserService {
         if (user == null) {
             throw new UnauthorizedException();
         }
-        if (!BCrypt.checkpw(request.password(), user.password())) {
+        try {
+            if (!BCrypt.checkpw(request.password(), user.password())) {
+                throw new UnauthorizedException();
+            }
+        } catch (IllegalArgumentException e) {
             throw new UnauthorizedException();
         }
         String token = UUID.randomUUID().toString();

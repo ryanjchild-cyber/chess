@@ -23,7 +23,9 @@ public class MemoryDataAccess implements DataAccess {
         if (user == null) {
             throw new DataAccessException("User is null");
         }
-        if (users.putIfAbsent(user.username(), user) != null) {
+        String hashedPassword = org.mindrot.jbcrypt.BCrypt.hashpw(user.password(), org.mindrot.jbcrypt.BCrypt.gensalt());
+        UserData hashedUser = new UserData(user.username(), hashedPassword, user.email());
+        if (users.putIfAbsent(user.username(), hashedUser) != null) {
             throw new DataAccessException("already taken");
         }
     }
@@ -91,6 +93,10 @@ public class MemoryDataAccess implements DataAccess {
         if (user == null) {
             return false;
         }
-        return user.password().equals(clearTextPassword);
+        try {
+            return org.mindrot.jbcrypt.BCrypt.checkpw(clearTextPassword, user.password());
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 }

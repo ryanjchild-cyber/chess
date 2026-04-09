@@ -70,19 +70,19 @@ public class MySQLDataAccess implements DataAccess {
     }
     @Override
     public void createUser(UserData user) throws DataAccessException {
-        if (user==null) {
+        if (user == null) {
             throw new DataAccessException("User is null");
         }
-        if (getUser(user.username())!=null) {
+        if (getUser(user.username()) != null) {
             throw new DataAccessException("already taken");
         }
-        String hashedPassword=BCrypt.hashpw(user.password(),BCrypt.gensalt());
-        try (var connection=DatabaseManager.getConnection();
-             PreparedStatement statement= connection.prepareStatement(
+        String hashedPassword = BCrypt.hashpw(user.password(), BCrypt.gensalt());
+        try (var connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(
                      "INSERT INTO user (username, password, email) VALUES (?, ?, ?)")) {
-            statement.setString(1,user.username());
-            statement.setString(2,hashedPassword);
-            statement.setString(3,user.email());
+            statement.setString(1, user.username());
+            statement.setString(2, hashedPassword);
+            statement.setString(3, user.email());
             statement.executeUpdate();
         } catch (Exception e) {
             throw new DataAccessException("Unable to create user");
@@ -260,10 +260,14 @@ public class MySQLDataAccess implements DataAccess {
     }
     @Override
     public boolean verifyUser(String username, String clearTextPassword) throws DataAccessException {
-        UserData user=getUser(username);
-        if (user==null) {
+        UserData user = getUser(username);
+        if (user == null) {
             return false;
         }
-        return BCrypt.checkpw(clearTextPassword,user.password());
+        try {
+            return BCrypt.checkpw(clearTextPassword, user.password());
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 }

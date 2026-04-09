@@ -137,7 +137,12 @@ public class GameplayService {
         if (authToken == null || authToken.isBlank()) {
             throw new UnauthorizedException("Error: unauthorized");
         }
-        AuthData auth = dao.getAuth(authToken);
+        AuthData auth;
+        try {
+            auth = dao.getAuth(authToken);
+        } catch (IllegalArgumentException e) {
+            throw new UnauthorizedException("Error: unauthorized");
+        }
         if (auth == null) {
             throw new UnauthorizedException("Error: unauthorized");
         }
