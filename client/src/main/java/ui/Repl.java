@@ -7,11 +7,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
+import client.WebSocketFacade;
+import chess.ChessMove;
+import chess.ChessPosition;
+import websocket.messages.*;
+import com.google.gson.Gson;
 public class Repl {
     private final ServerFacade server;
     private final Scanner scanner=new Scanner(System.in);
     private AuthData auth;
     private final List<GameData> lastListedGames=new ArrayList<>();
+    private WebSocketFacade ws;
+    private final Gson gson=new Gson();
+    private GameData currentGame;
+    private int currentGameID;
+    private ChessGame.TeamColor perspective;
+    private boolean inGame=false;
     public Repl(ServerFacade server) {
         this.server=server;
     }
@@ -149,28 +160,25 @@ public class Repl {
             return;
         }
         System.out.print("game number: ");
-        Integer number=readInt();
-        if (number==null||number<1||number>lastListedGames.size()) {
+        Integer number = readInt();
+        if (number == null || number < 1 || number > lastListedGames.size()) {
             System.out.println("Invalid game number.");
             return;
         }
         System.out.print("color (WHITE or BLACK): ");
-        String color=scanner.nextLine().trim().toUpperCase(Locale.ROOT);
-        if (!color.equals("WHITE")&&!color.equals("BLACK")) {
-            System.out.println("Color must be WHITE or BLACK.");
-            return;
-        }
-        GameData selected=lastListedGames.get(number-1);
+        String color = scanner.nextLine().trim().toUpperCase(Locale.ROOT);
+        GameData selected = lastListedGames.get(number - 1);
         try {
-            server.joinGame(auth.authToken(),color,selected.gameID());
-            System.out.println("Joined game: "+selected.gameName());
-            if (color.equals("WHITE")) {
-                ChessBoardUI.draw(new ChessGame(),ChessGame.TeamColor.WHITE);
-            } else {
-                ChessBoardUI.draw(new ChessGame(), ChessGame.TeamColor.BLACK);
-            }
+            server.joinGame(auth.authToken(), color, selected.gameID());
+            perspective = color.equals("WHITE") ?
+                    ChessGame.TeamColor.WHITE :
+                    ChessGame.TeamColor.BLACK;
+            currentGameID = selected.gameID();
+            connectWebSocket();
+            inGame = true;
+            gameplayLoop();
         } catch (Exception ex) {
-            System.out.println("Unable to join game: "+cleanMessage(ex.getMessage()));
+            System.out.println("Unable to join game: " + cleanMessage(ex.getMessage()));
         }
     }
     private void observeGame() {
@@ -179,14 +187,21 @@ public class Repl {
             return;
         }
         System.out.print("game number: ");
-        Integer number=readInt();
-        if (number==null||number<1||number>lastListedGames.size()) {
+        Integer number = readInt();
+        if (number == null || number < 1 || number > lastListedGames.size()) {
             System.out.println("Invalid game number.");
             return;
         }
-        GameData selected=lastListedGames.get(number-1);
-        System.out.println("Observing game: "+selected.gameName());
-        ChessBoardUI.draw(new ChessGame(),ChessGame.TeamColor.WHITE);
+        GameData selected = lastListedGames.get(number - 1);
+        try {
+            perspective = ChessGame.TeamColor.WHITE;
+            currentGameID = selected.gameID();
+            connectWebSocket();
+            inGame = true;
+            gameplayLoop();
+        } catch (Exception ex) {
+            System.out.println("Unable to observe: " + cleanMessage(ex.getMessage()));
+        }
     }
     private Integer readInt() {
         String text=scanner.nextLine().trim();
@@ -224,4 +239,25 @@ public class Repl {
         }
         return message.replace("Error: ","");
     }
+    private void connectWebSocket() throws Exception {
+        ws=new WebSocketFacade(server.getServerUrl(),this::handleMessage);
+        ws.connect(auth.authToken(),currentGameID);
+    }
+    private void gameplayLoop() {
+        printGameplayHelp();
+        while (inGame) {
+            System.out.print("[GAME] >>> ");
+            String input = scanner.nextLine().trim().toLowerCase();
+            switch (input) {
+                case "help" -> printGameplayHelp();
+                case "redraw" -> redraw();
+                case "leave" -> leave();
+                case "resign" -> resign();
+                case "move" -> makeMove();
+                case "highlight" -> highlight();
+                default -> System.out.println("Unknown command.");
+            }
+        }
+    }
+
 }
