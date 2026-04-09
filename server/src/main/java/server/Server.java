@@ -84,23 +84,23 @@ public class Server {
         okJson(context, result);
     }
     private void logout(Context context) throws DataAccessException {
-        String authToken = context.header("authorization");
+        String authToken = context.header("Authorization");
         userService.logout(authToken);
         okEmpty(context);
     }
     private void listGames(Context context) throws DataAccessException {
-        String authToken = context.header("authorization");
+        String authToken = context.header("Authorization");
         ListGamesResult result = gameService.listGames(authToken);
         okJson(context, result);
     }
     private void createGame(Context context) throws DataAccessException {
-        String authToken = context.header("authorization");
+        String authToken = context.header("Authorization");
         CreateGameRequest request = gson.fromJson(context.body(), CreateGameRequest.class);
         CreateGameResult result = gameService.createGame(authToken, request);
         okJson(context, result);
     }
     private void joinGame(Context context) throws DataAccessException {
-        String authToken = context.header("authorization");
+        String authToken = context.header("Authorization");
         JoinGameRequest request = gson.fromJson(context.body(), JoinGameRequest.class);
         gameService.joinGame(authToken, request);
         okEmpty(context);

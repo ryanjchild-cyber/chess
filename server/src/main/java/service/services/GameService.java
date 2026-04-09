@@ -39,20 +39,22 @@ public class GameService {
         return new CreateGameResult(id);
     }
     public void joinGame(String authToken, JoinGameRequest request) throws DataAccessException {
-        AuthData auth=requireAuth(authToken);
-        if (request==null||request.gameID()<=0||request.playerColor()==null) {
+        AuthData auth = requireAuth(authToken);
+        if (request == null || request.gameID() <= 0 || request.playerColor() == null) {
             throw new BadRequestException();
         }
-        GameData game=dao.getGame(request.gameID());
-        if(game==null) {
+        GameData game = dao.getGame(request.gameID());
+        if (game == null) {
             throw new BadRequestException();
         }
-        String color=request.playerColor().trim().toUpperCase();
+        String color = request.playerColor().trim().toUpperCase();
         if (!color.equals("WHITE") && !color.equals("BLACK")) {
             throw new BadRequestException();
         }
         if (color.equals("WHITE")) {
-            if (game.whiteUsername()!=null) {throw new ForbiddenException();}
+            if (game.whiteUsername() != null) {
+                throw new ForbiddenException();
+            }
             dao.updateGame(new GameData(
                     game.gameID(),
                     auth.username(),
@@ -62,7 +64,9 @@ public class GameService {
                     game.gameOver()
             ));
         } else {
-            if (game.blackUsername()!=null) {throw new ForbiddenException();}
+            if (game.blackUsername() != null) {
+                throw new ForbiddenException();
+            }
             dao.updateGame(new GameData(
                     game.gameID(),
                     game.whiteUsername(),

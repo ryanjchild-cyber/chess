@@ -43,6 +43,12 @@ public class MySQLDataAccess implements DataAccess {
                             gameOver BOOLEAN NOT NULL DEFAULT FALSE
                         )
                     """);
+                    statement.executeUpdate("""
+                        ALTER TABLE game
+                        ADD COLUMN gameOver BOOLEAN NOT NULL DEFAULT FALSE
+                    """);
+                } catch (Exception ignored) {
+                    //column already exists
                 }
             }
         } catch (Exception e) {
@@ -166,7 +172,7 @@ public class MySQLDataAccess implements DataAccess {
             statement.setString(2, game.blackUsername());
             statement.setString(3, game.gameName());
             statement.setString(4, gson.toJson(game.game()));
-            statement.setBoolean(5,game.gameOver());
+            statement.setBoolean(5, game.gameOver());
             statement.executeUpdate();
             try (ResultSet result = statement.getGeneratedKeys()) {
                 if (result.next()) {
@@ -188,15 +194,7 @@ public class MySQLDataAccess implements DataAccess {
             statement.setInt(1, gameID);
             try (ResultSet result = statement.executeQuery()) {
                 if (result.next()) {
-                    ChessGame game;
-                    try {
-                        game = gson.fromJson(result.getString("gameJson"), ChessGame.class);
-                        if (game == null) {
-                            game = new ChessGame();
-                        }
-                    } catch (Exception ex) {
-                        game = new ChessGame();
-                    }
+                    ChessGame game = gson.fromJson(result.getString("gameJson"), ChessGame.class);
                     return new GameData(
                             result.getInt("gameID"),
                             result.getString("whiteUsername"),
@@ -217,15 +215,16 @@ public class MySQLDataAccess implements DataAccess {
         ArrayList<GameData> games = new ArrayList<>();
         try (var connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(
-                     "SELECT gameID, whiteUsername, blackUsername, gameName, gameOver FROM game")) {
+                     "SELECT gameID, whiteUsername, blackUsername, gameName, gameJson, gameOver FROM game")) {
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
+                    ChessGame game = gson.fromJson(result.getString("gameJson"), ChessGame.class);
                     games.add(new GameData(
                             result.getInt("gameID"),
                             result.getString("whiteUsername"),
                             result.getString("blackUsername"),
                             result.getString("gameName"),
-                            null,
+                            game,
                             result.getBoolean("gameOver")
                     ));
                 }
@@ -248,7 +247,7 @@ public class MySQLDataAccess implements DataAccess {
             statement.setString(3, game.gameName());
             statement.setString(4, gson.toJson(game.game()));
             statement.setBoolean(5, game.gameOver());
-            statement.setInt(6,game.gameID());
+            statement.setInt(6, game.gameID());
             int rows = statement.executeUpdate();
             if (rows == 0) {
                 throw new DataAccessException("game not found");
@@ -259,6 +258,7 @@ public class MySQLDataAccess implements DataAccess {
             throw new DataAccessException("Unable to update game");
         }
     }
+    @Override
     public boolean verifyUser(String username, String clearTextPassword) throws DataAccessException {
         UserData user=getUser(username);
         if (user==null) {
