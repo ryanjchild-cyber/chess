@@ -39,7 +39,8 @@ public class MySQLDataAccess implements DataAccess {
                             whiteUsername VARCHAR(255),
                             blackUsername VARCHAR(255),
                             gameName VARCHAR(255) NOT NULL,
-                            gameJson TEXT NOT NULL
+                            gameJson TEXT NOT NULL,
+                            gameOver BOOLEAN NOT NULL DEFAULT FALSE
                         )
                     """);
                 }
@@ -165,6 +166,7 @@ public class MySQLDataAccess implements DataAccess {
             statement.setString(2, game.blackUsername());
             statement.setString(3, game.gameName());
             statement.setString(4, gson.toJson(game.game()));
+            statement.setBoolean(5,game.gameOver());
             statement.executeUpdate();
             try (ResultSet result = statement.getGeneratedKeys()) {
                 if (result.next()) {
@@ -192,7 +194,8 @@ public class MySQLDataAccess implements DataAccess {
                             result.getString("whiteUsername"),
                             result.getString("blackUsername"),
                             result.getString("gameName"),
-                            game
+                            game,
+                            result.getBoolean("gameOver")
                     );
                 }
             }
@@ -215,7 +218,8 @@ public class MySQLDataAccess implements DataAccess {
                             result.getString("whiteUsername"),
                             result.getString("blackUsername"),
                             result.getString("gameName"),
-                            game
+                            game,
+                            result.getBoolean("gameOver")
                     ));
                 }
             }
@@ -236,7 +240,8 @@ public class MySQLDataAccess implements DataAccess {
             statement.setString(2, game.blackUsername());
             statement.setString(3, game.gameName());
             statement.setString(4, gson.toJson(game.game()));
-            statement.setInt(5, game.gameID());
+            statement.setBoolean(5, game.gameOver());
+            statement.setInt(6,game.gameID());
             int rows = statement.executeUpdate();
             if (rows == 0) {
                 throw new DataAccessException("game not found");

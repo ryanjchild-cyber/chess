@@ -78,60 +78,50 @@ public class Server {
         RegisterResult result = userService.register(request);
         okJson(context, result);
     }
-
     private void login(Context context) throws DataAccessException {
         LoginRequest request = gson.fromJson(context.body(), LoginRequest.class);
         LoginResult result = userService.login(request);
         okJson(context, result);
     }
-
     private void logout(Context context) throws DataAccessException {
         String authToken = context.header("authorization");
         userService.logout(authToken);
         okEmpty(context);
     }
-
     private void listGames(Context context) throws DataAccessException {
         String authToken = context.header("authorization");
         ListGamesResult result = gameService.listGames(authToken);
         okJson(context, result);
     }
-
     private void createGame(Context context) throws DataAccessException {
         String authToken = context.header("authorization");
         CreateGameRequest request = gson.fromJson(context.body(), CreateGameRequest.class);
         CreateGameResult result = gameService.createGame(authToken, request);
         okJson(context, result);
     }
-
     private void joinGame(Context context) throws DataAccessException {
         String authToken = context.header("authorization");
         JoinGameRequest request = gson.fromJson(context.body(), JoinGameRequest.class);
         gameService.joinGame(authToken, request);
         okEmpty(context);
     }
-
     public int run(int desiredPort) {
         javalin.start(desiredPort);
         return javalin.port();
     }
-
     public void stop() {
         javalin.stop();
     }
-
     private void okEmpty(Context context) {
         context.status(200);
         context.contentType("application/json");
         context.result("{}");
     }
-
     private void okJson(Context context, Object object) {
         context.status(200);
         context.contentType("application/json");
         context.result(gson.toJson(object));
     }
-
     private static String safeMessage(Exception e) {
         return (e.getMessage() == null || e.getMessage().isBlank()) ? "server error" : e.getMessage();
     }
