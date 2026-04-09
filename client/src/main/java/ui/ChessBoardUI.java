@@ -1,11 +1,14 @@
 package ui;
-import chess.ChessBoard;
-import chess.ChessGame;
-import chess.ChessPiece;
-import chess.ChessPosition;
+import chess.*;
+
+import java.util.Collection;
+
 import static ui.EscapeSequences.*;
 public class ChessBoardUI {
     public static void draw(ChessGame game, ChessGame.TeamColor perspective) {
+        draw(game,perspective,null,null);
+    }
+    public static void draw(ChessGame game, ChessGame.TeamColor perspective, ChessPosition selected, Collection<ChessMove> legalMoves) {
         ChessBoard board=game.getBoard();
         System.out.println();
         if (perspective==ChessGame.TeamColor.WHITE) {

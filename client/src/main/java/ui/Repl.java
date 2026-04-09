@@ -259,5 +259,89 @@ public class Repl {
             }
         }
     }
-
+    private void handleMessage(String message) {
+        ServerMessage base = gson.fromJson(message, ServerMessage.class);
+        switch (base.getServerMessageType()) {
+            case LOAD_GAME -> {
+                LoadGameMessage msg = gson.fromJson(message, LoadGameMessage.class);
+                currentGame = msg.getGame();
+                redraw();
+            }
+            case NOTIFICATION -> {
+                NotificationMessage msg = gson.fromJson(message, NotificationMessage.class);
+                System.out.println(msg.getMessage());
+            }
+            case ERROR -> {
+                ErrorMessage msg = gson.fromJson(message, ErrorMessage.class);
+                System.out.println(msg.getErrorMessage());
+            }
+        }
+    }
+    private void redraw() {
+        if (currentGame!=null) {
+            ChessBoardUI.draw(currentGame.game(),perspective);
+        }
+    }
+    private void leave() {
+        try {
+            ws.leave(auth.authToken(), currentGameID);
+            ws.close();
+            inGame = false;
+        } catch (Exception e) {
+            System.out.println("Error leaving game.");
+        }
+    }
+    private void resign() {
+        System.out.print("Are you sure? (yes/no): ");
+        if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
+            try {
+                ws.resign(auth.authToken(), currentGameID);
+            } catch (Exception e) {
+                System.out.println("Error resigning.");
+            }
+        }
+    }
+    private void makeMove() {
+        try {
+            System.out.print("from (row col): ");
+            int r1 = scanner.nextInt();
+            int c1 = scanner.nextInt();
+            System.out.print("to (row col): ");
+            int r2 = scanner.nextInt();
+            int c2 = scanner.nextInt();
+            scanner.nextLine();
+            ChessMove move = new ChessMove(
+                    new ChessPosition(r1, c1),
+                    new ChessPosition(r2, c2),
+                    null
+            );
+            ws.makeMove(auth.authToken(), currentGameID, move);
+        } catch (Exception e) {
+            System.out.println("Invalid move input.");
+            scanner.nextLine();
+        }
+    }
+    private void highlight() {
+        try {
+            System.out.print("piece (row col): ");
+            int r = scanner.nextInt();
+            int c = scanner.nextInt();
+            scanner.nextLine();
+            var pos = new ChessPosition(r, c);
+            var moves = currentGame.game().validMoves(pos);
+            ChessBoardUI.draw(currentGame.game(), perspective, pos, moves);
+        } catch (Exception e) {
+            System.out.println("Invalid input.");
+        }
+    }
+    private void printGameplayHelp() {
+        System.out.println("""
+            help       - show commands
+            redraw     - redraw board
+            leave      - leave game
+            move       - make a move
+            resign     - resign game
+            highlight  - highlight moves
+            """);
+    }
 }
