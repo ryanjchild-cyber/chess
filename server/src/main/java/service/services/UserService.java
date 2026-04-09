@@ -3,6 +3,7 @@ import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import model.AuthData;
 import model.UserData;
+import org.mindrot.jbcrypt.BCrypt;
 import service.exceptions.BadRequestException;
 import service.exceptions.ForbiddenException;
 import service.exceptions.UnauthorizedException;
@@ -12,7 +13,6 @@ import service.results.LoginResult;
 import service.results.RegisterResult;
 
 import java.util.UUID;
-
 public class UserService {
     private final DataAccess dao;
     public UserService(DataAccess dao) {
@@ -31,19 +31,19 @@ public class UserService {
         return new RegisterResult(request.username(),token);
     }
     public LoginResult login(LoginRequest request) throws DataAccessException {
-        if (request==null||isBlank(request.username())||isBlank(request.password())) {
+        if (request == null || isBlank(request.username()) || isBlank(request.password())) {
             throw new BadRequestException();
         }
-        UserData user=dao.getUser(request.username());
-        if (user==null) {
+        UserData user = dao.getUser(request.username());
+        if (user == null) {
             throw new UnauthorizedException();
         }
-        if (!dao.verifyUser(request.username(), request.password())) {
+        if (!BCrypt.checkpw(request.password(), user.password())) {
             throw new UnauthorizedException();
         }
-        String token=UUID.randomUUID().toString();
-        dao.createAuth(new AuthData(token,request.username()));
-        return new LoginResult(request.username(),token);
+        String token = UUID.randomUUID().toString();
+        dao.createAuth(new AuthData(token, request.username()));
+        return new LoginResult(request.username(), token);
     }
     public void logout(String authToken) throws DataAccessException {
         if (authToken==null||authToken.isBlank()) {

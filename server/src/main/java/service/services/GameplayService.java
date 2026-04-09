@@ -2,6 +2,7 @@ package service.services;
 import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPosition;
+import chess.InvalidMoveException;
 import com.google.gson.Gson;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
@@ -9,11 +10,8 @@ import io.javalin.websocket.WsContext;
 import model.AuthData;
 import model.GameData;
 import server.ConnectionManager;
-import service.exceptions.BadRequestException;
-import service.exceptions.ForbiddenException;
-import service.exceptions.UnauthorizedException;
-import websocket.messages.LoadGameMessage;
-import websocket.messages.NotificationMessage;
+import service.exceptions.*;
+import websocket.messages.*;
 public class GameplayService {
     private final DataAccess dao;
     private final ConnectionManager connections;
@@ -49,9 +47,21 @@ public class GameplayService {
         if (role == ConnectionManager.Role.BLACK && game.getTeamTurn() != ChessGame.TeamColor.BLACK) {
             throw new ForbiddenException("Error: not your turn");
         }
-        game.makeMove(move);
-        dao.updateGame(gameData);
-        broadcastGame(gameID, gameData);
+        try {
+            game.makeMove(move);
+        } catch (InvalidMoveException e) {
+            throw new BadRequestException("Error: invalid move");
+        }
+        GameData updatedGame = new GameData(
+                gameData.gameID(),
+                gameData.whiteUsername(),
+                gameData.blackUsername(),
+                gameData.gameName(),
+                game,
+                gameData.gameOver()
+        );
+        dao.updateGame(updatedGame);
+        broadcastGame(gameID, updatedGame);
         notifyOthers(gameID, session, auth.username() + " made move " + moveToString(move));
         if (game.isInCheck(game.getTeamTurn()) && !game.isInCheckmate(game.getTeamTurn())) {
             String checkedPlayer = game.getTeamTurn() == ChessGame.TeamColor.WHITE
@@ -128,7 +138,7 @@ public class GameplayService {
     private void notifyOthers(int gameID, WsContext root, String text) {
         NotificationMessage message = new NotificationMessage(text);
         for (var connection : connections.getGameConnections(gameID)) {
-            if (!connection.getSession().getSessionId().equals(root.getSessionId())) {
+            if (connection.getSession() != root) {
                 send(connection.getSession(), message);
             }
         }

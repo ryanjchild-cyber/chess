@@ -1,25 +1,22 @@
 package server;
-
 import com.google.gson.Gson;
-import io.javalin.websocket.WsContext;
+import io.javalin.websocket.WsCloseContext;
+import io.javalin.websocket.WsErrorContext;
+import io.javalin.websocket.WsMessageContext;
 import service.exceptions.*;
 import service.services.GameplayService;
 import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
-
 public class WebSocketHandler {
     private final Gson gson = new Gson();
     private final GameplayService gameplayService;
-
     public WebSocketHandler(GameplayService gameplayService) {
         this.gameplayService = gameplayService;
     }
-
-    public void onMessage(WsContext ctx) {
+    public void onMessage(WsMessageContext ctx) {
         try {
             UserGameCommand base = gson.fromJson(ctx.message(), UserGameCommand.class);
-
             switch (base.getCommandType()) {
                 case CONNECT -> gameplayService.connect(base.getAuthToken(), base.getGameID(), ctx);
                 case LEAVE -> gameplayService.leave(base.getAuthToken(), base.getGameID(), ctx);
@@ -40,16 +37,13 @@ public class WebSocketHandler {
             sendError(ctx, "Error: " + ex.getMessage());
         }
     }
-
-    public void onClose(WsContext ctx) {
+    //public void onClose(WsCloseContext ctx) {
         // optional
-    }
-
-    public void onError(WsContext ctx) {
+    //}
+    //public void onError(WsErrorContext ctx) {
         // optional
-    }
-
-    private void sendError(WsContext ctx, String message) {
+    //}
+    private void sendError(WsMessageContext ctx, String message) {
         if (message == null || !message.toLowerCase().contains("error")) {
             message = "Error: " + message;
         }

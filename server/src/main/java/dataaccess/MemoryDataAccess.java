@@ -57,7 +57,14 @@ public class MemoryDataAccess implements DataAccess {
             throw new DataAccessException("game is null");
         }
         int id = nextGameID.getAndIncrement();
-        games.put(id, new GameData(id, game.whiteUsername(), game.blackUsername(), game.gameName(), game.game()));
+        games.put(id, new GameData(
+                id,
+                game.whiteUsername(),
+                game.blackUsername(),
+                game.gameName(),
+                game.game(),
+                game.gameOver()
+        ));
         return id;
     }
     @Override

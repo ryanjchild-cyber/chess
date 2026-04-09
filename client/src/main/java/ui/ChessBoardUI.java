@@ -1,26 +1,25 @@
 package ui;
 import chess.*;
-
 import java.util.Collection;
-
 import static ui.EscapeSequences.*;
 public class ChessBoardUI {
     public static void draw(ChessGame game, ChessGame.TeamColor perspective) {
-        draw(game,perspective,null,null);
+        draw(game, perspective, null, null);
     }
-    public static void draw(ChessGame game, ChessGame.TeamColor perspective, ChessPosition selected, Collection<ChessMove> legalMoves) {
-        ChessBoard board=game.getBoard();
+    public static void draw(ChessGame game, ChessGame.TeamColor perspective,
+                            ChessPosition selected, Collection<ChessMove> legalMoves) {
+        ChessBoard board = game.getBoard();
         System.out.println();
-        if (perspective==ChessGame.TeamColor.WHITE) {
+        if (perspective == ChessGame.TeamColor.WHITE) {
             printLettersWhite();
-            for (int row=8;row>=1;row--) {
-                printRow(board,row,false);
+            for (int row = 8; row >= 1; row--) {
+                printRow(board, row, false, selected, legalMoves);
             }
             printLettersWhite();
         } else {
             printLettersBlack();
-            for (int row=1;row<=8;row++) {
-                printRow(board,row,true);
+            for (int row = 1; row <= 8; row++) {
+                printRow(board, row, true, selected, legalMoves);
             }
             printLettersBlack();
         }
@@ -29,56 +28,83 @@ public class ChessBoardUI {
         System.out.println();
     }
     private static void printLettersWhite() {
-        System.out.print(SET_BG_COLOR_BLACK+SET_TEXT_COLOR_WHITE+"    ");
-        for (char c='a';c<='h';c++) {
-            System.out.print(" "+c+" ");
+        System.out.print(SET_BG_COLOR_BLACK + SET_TEXT_COLOR_WHITE + "    ");
+        for (char c = 'a'; c <= 'h'; c++) {
+            System.out.print(" " + c + " ");
         }
-        System.out.println("    "+RESET_BG_COLOR+RESET_TEXT_COLOR);
+        System.out.println("    " + RESET_BG_COLOR + RESET_TEXT_COLOR);
     }
     private static void printLettersBlack() {
-        System.out.print(SET_BG_COLOR_BLACK+SET_TEXT_COLOR_WHITE+"    ");
-        for (char c='h';c>='a';c--) {
-            System.out.print(" "+c+" ");
+        System.out.print(SET_BG_COLOR_BLACK + SET_TEXT_COLOR_WHITE + "    ");
+        for (char c = 'h'; c >= 'a'; c--) {
+            System.out.print(" " + c + " ");
         }
-        System.out.println("    "+RESET_BG_COLOR+RESET_TEXT_COLOR);
+        System.out.println("    " + RESET_BG_COLOR + RESET_TEXT_COLOR);
     }
-    private static void printRow(ChessBoard board,int row,boolean blackPerspective) {
-        System.out.print(SET_BG_COLOR_BLACK+SET_TEXT_COLOR_WHITE+" "+row+"  ");
+    private static void printRow(ChessBoard board, int row, boolean blackPerspective,
+                                 ChessPosition selected, Collection<ChessMove> legalMoves) {
+        System.out.print(SET_BG_COLOR_BLACK + SET_TEXT_COLOR_WHITE + " " + row + "  ");
         if (!blackPerspective) {
-            for (int col=1;col<=8;col++) {
-                printSquare(board,row,col);
+            for (int col = 1; col <= 8; col++) {
+                printSquare(board, row, col, selected, legalMoves);
             }
         } else {
-            for (int col=8;col>=1;col--) {
-                printSquare(board,row,col);
+            for (int col = 8; col >= 1; col--) {
+                printSquare(board, row, col, selected, legalMoves);
             }
         }
-        System.out.println(SET_BG_COLOR_BLACK+SET_TEXT_COLOR_WHITE+"  "+row+" "+RESET_BG_COLOR+RESET_TEXT_COLOR);
+        System.out.println(SET_BG_COLOR_BLACK + SET_TEXT_COLOR_WHITE + "  " + row + " " + RESET_BG_COLOR + RESET_TEXT_COLOR);
     }
-    private static void printSquare(ChessBoard board,int row,int col) {
-        boolean lightSquare=(row+col)%2==1;
-        if (lightSquare) {
-            System.out.print(SET_BG_COLOR_WHITE);
+    private static void printSquare(ChessBoard board, int row, int col,
+                                    ChessPosition selected, Collection<ChessMove> legalMoves) {
+        ChessPosition current = new ChessPosition(row, col);
+        if (isSelected(current, selected)) {
+            System.out.print(SET_BG_COLOR_YELLOW);
+        } else if (isLegalDestination(current, legalMoves)) {
+            System.out.print(SET_BG_COLOR_GREEN);
         } else {
-            System.out.print(SET_BG_COLOR_DARK_GREEN);
+            boolean lightSquare = (row + col) % 2 == 1;
+            if (lightSquare) {
+                System.out.print(SET_BG_COLOR_WHITE);
+            } else {
+                System.out.print(SET_BG_COLOR_DARK_GREEN);
+            }
         }
-        ChessPiece piece=board.getPiece(new ChessPosition(row,col));
-        if (piece==null) {
+        ChessPiece piece = board.getPiece(current);
+        if (piece == null) {
             System.out.print(EMPTY);
         } else {
             System.out.print(pieceString(piece));
         }
         System.out.print(RESET_TEXT_COLOR);
     }
+    private static boolean isSelected(ChessPosition current, ChessPosition selected) {
+        if (selected == null) {
+            return false;
+        }
+        return current.getRow() == selected.getRow() && current.getColumn() == selected.getColumn();
+    }
+    private static boolean isLegalDestination(ChessPosition current, Collection<ChessMove> legalMoves) {
+        if (legalMoves == null) {
+            return false;
+        }
+        for (ChessMove move : legalMoves) {
+            ChessPosition end = move.getEndPosition();
+            if (end.getRow() == current.getRow() && end.getColumn() == current.getColumn()) {
+                return true;
+            }
+        }
+        return false;
+    }
     private static String pieceString(ChessPiece piece) {
-        boolean white=piece.getTeamColor()==ChessGame.TeamColor.WHITE;
+        boolean white = piece.getTeamColor() == ChessGame.TeamColor.WHITE;
         return switch (piece.getPieceType()) {
-            case KING->white?SET_TEXT_COLOR_RED+WHITE_KING:SET_TEXT_COLOR_BLUE+BLACK_KING;
-            case QUEEN->white?SET_TEXT_COLOR_RED+WHITE_QUEEN:SET_TEXT_COLOR_BLUE+BLACK_QUEEN;
-            case BISHOP->white?SET_TEXT_COLOR_RED+WHITE_BISHOP:SET_TEXT_COLOR_BLUE+BLACK_BISHOP;
-            case KNIGHT->white?SET_TEXT_COLOR_RED+WHITE_KNIGHT:SET_TEXT_COLOR_BLUE+BLACK_KNIGHT;
-            case ROOK->white?SET_TEXT_COLOR_RED+WHITE_ROOK:SET_TEXT_COLOR_BLUE+BLACK_ROOK;
-            case PAWN->white?SET_TEXT_COLOR_RED+WHITE_PAWN:SET_TEXT_COLOR_BLUE+BLACK_PAWN;
+            case KING -> white ? SET_TEXT_COLOR_RED + WHITE_KING : SET_TEXT_COLOR_BLUE + BLACK_KING;
+            case QUEEN -> white ? SET_TEXT_COLOR_RED + WHITE_QUEEN : SET_TEXT_COLOR_BLUE + BLACK_QUEEN;
+            case BISHOP -> white ? SET_TEXT_COLOR_RED + WHITE_BISHOP : SET_TEXT_COLOR_BLUE + BLACK_BISHOP;
+            case KNIGHT -> white ? SET_TEXT_COLOR_RED + WHITE_KNIGHT : SET_TEXT_COLOR_BLUE + BLACK_KNIGHT;
+            case ROOK -> white ? SET_TEXT_COLOR_RED + WHITE_ROOK : SET_TEXT_COLOR_BLUE + BLACK_ROOK;
+            case PAWN -> white ? SET_TEXT_COLOR_RED + WHITE_PAWN : SET_TEXT_COLOR_BLUE + BLACK_PAWN;
         };
     }
 }

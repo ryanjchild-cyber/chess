@@ -160,7 +160,7 @@ public class MySQLDataAccess implements DataAccess {
         }
         try (var connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(
-                     "INSERT INTO game (whiteUsername, blackUsername, gameName, gameJson) VALUES (?, ?, ?, ?)",
+                     "INSERT INTO game (whiteUsername, blackUsername, gameName, gameJson, gameOver) VALUES (?, ?, ?, ?, ?)",
                      Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, game.whiteUsername());
             statement.setString(2, game.blackUsername());
@@ -184,11 +184,19 @@ public class MySQLDataAccess implements DataAccess {
     public GameData getGame(int gameID) throws DataAccessException {
         try (var connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(
-                     "SELECT gameID, whiteUsername, blackUsername, gameName, gameJson FROM game WHERE gameID = ?")) {
+                     "SELECT gameID, whiteUsername, blackUsername, gameName, gameJson, gameOver FROM game WHERE gameID = ?")) {
             statement.setInt(1, gameID);
             try (ResultSet result = statement.executeQuery()) {
                 if (result.next()) {
-                    ChessGame game = gson.fromJson(result.getString("gameJson"), ChessGame.class);
+                    ChessGame game;
+                    try {
+                        game = gson.fromJson(result.getString("gameJson"), ChessGame.class);
+                        if (game == null) {
+                            game = new ChessGame();
+                        }
+                    } catch (Exception ex) {
+                        game = new ChessGame();
+                    }
                     return new GameData(
                             result.getInt("gameID"),
                             result.getString("whiteUsername"),
@@ -209,16 +217,15 @@ public class MySQLDataAccess implements DataAccess {
         ArrayList<GameData> games = new ArrayList<>();
         try (var connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(
-                     "SELECT gameID, whiteUsername, blackUsername, gameName, gameJson FROM game")) {
+                     "SELECT gameID, whiteUsername, blackUsername, gameName, gameOver FROM game")) {
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
-                    ChessGame game = gson.fromJson(result.getString("gameJson"), ChessGame.class);
                     games.add(new GameData(
                             result.getInt("gameID"),
                             result.getString("whiteUsername"),
                             result.getString("blackUsername"),
                             result.getString("gameName"),
-                            game,
+                            null,
                             result.getBoolean("gameOver")
                     ));
                 }
@@ -235,7 +242,7 @@ public class MySQLDataAccess implements DataAccess {
         }
         try (var connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(
-                     "UPDATE game SET whiteUsername = ?, blackUsername = ?, gameName = ?, gameJson = ? WHERE gameID = ?")) {
+                     "UPDATE game SET whiteUsername = ?, blackUsername = ?, gameName = ?, gameJson = ?, gameOver = ? WHERE gameID = ?")) {
             statement.setString(1, game.whiteUsername());
             statement.setString(2, game.blackUsername());
             statement.setString(3, game.gameName());
@@ -260,4 +267,3 @@ public class MySQLDataAccess implements DataAccess {
         return BCrypt.checkpw(clearTextPassword,user.password());
     }
 }
-
