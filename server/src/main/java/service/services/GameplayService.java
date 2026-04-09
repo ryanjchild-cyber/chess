@@ -31,7 +31,7 @@ public class GameplayService {
             case BLACK -> auth.username() + " connected as black";
             case OBSERVER -> auth.username() + " connected as an observer";
         };
-        notifyOthers(gameID, session, msg);
+        notifyOthers(gameID, auth.username(), msg);
     }
     public void makeMove(String authToken, Integer gameID, ChessMove move, WsContext session) throws DataAccessException {
         AuthData auth = requireAuth(authToken);
@@ -61,9 +61,9 @@ public class GameplayService {
                 gameData.gameOver()
         );
         dao.updateGame(updatedGame);
-        broadcastGame(gameID, updatedGame);
-        notifyOthers(gameID, session, auth.username() + " made move " + moveToString(move));
-        if (game.isInCheck(game.getTeamTurn()) && !game.isInCheckmate(game.getTeamTurn())) {
+        send(session, new LoadGameMessage(updatedGame));
+        broadcastGameOthers(gameID, auth.username(), updatedGame);
+        notifyOthers(gameID, auth.username(), auth.username() + " made move " + moveToString(move));        if (game.isInCheck(game.getTeamTurn()) && !game.isInCheckmate(game.getTeamTurn())) {
             String checkedPlayer = game.getTeamTurn() == ChessGame.TeamColor.WHITE
                     ? gameData.whiteUsername()
                     : gameData.blackUsername();
@@ -83,7 +83,7 @@ public class GameplayService {
         AuthData auth = requireAuth(authToken);
         requireGame(gameID);
         connections.remove(session);
-        notifyOthers(gameID, session, auth.username() + " left the game");
+        notifyOthers(gameID, auth.username(), auth.username() + " left the game");
     }
     public void resign(String authToken, Integer gameID, WsContext session) throws DataAccessException {
         AuthData auth = requireAuth(authToken);
@@ -123,28 +123,26 @@ public class GameplayService {
         }
         return ConnectionManager.Role.OBSERVER;
     }
-    private void broadcastGame(int gameID, GameData game) {
-        LoadGameMessage message = new LoadGameMessage(game);
-        for (var connection : connections.getGameConnections(gameID)) {
-            send(connection.getSession(), message);
-        }
-    }
     private void broadcastNotification(int gameID, String text) {
         NotificationMessage message = new NotificationMessage(text);
         for (var connection : connections.getGameConnections(gameID)) {
             send(connection.getSession(), message);
         }
     }
-    private void notifyOthers(int gameID, WsContext root, String text) {
+    private void notifyOthers(int gameID, String excludeUsername, String text) {
         NotificationMessage message = new NotificationMessage(text);
         for (var connection : connections.getGameConnections(gameID)) {
-            if (connection.getSession() != root) {
+            if (!connection.getUsername().equals(excludeUsername)) {
                 send(connection.getSession(), message);
             }
         }
     }
     private void send(WsContext session, Object message) {
-        session.send(gson.toJson(message));
+        try {
+            session.send(gson.toJson(message));
+        } catch (Exception e) {
+            connections.remove(session);
+        }
     }
     private String moveToString(ChessMove move) {
         return posToString(move.getStartPosition()) + "-" + posToString(move.getEndPosition());
@@ -152,5 +150,16 @@ public class GameplayService {
     private String posToString(ChessPosition pos) {
         char file = (char) ('a' + pos.getColumn() - 1);
         return "" + file + pos.getRow();
+    }
+    public void disconnect(WsContext session) {
+        connections.remove(session);
+    }
+    private void broadcastGameOthers(int gameID, String excludeUsername, GameData game) {
+        LoadGameMessage message = new LoadGameMessage(game);
+        for (var connection : connections.getGameConnections(gameID)) {
+            if (!connection.getUsername().equals(excludeUsername)) {
+                send(connection.getSession(), message);
+            }
+        }
     }
 }

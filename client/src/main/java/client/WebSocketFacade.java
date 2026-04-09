@@ -3,7 +3,7 @@ import chess.ChessMove;
 import com.google.gson.Gson;
 import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
-import javax.websocket.*;
+import jakarta.websocket.*;
 import java.net.URI;
 public class WebSocketFacade extends Endpoint {
     public interface Listener {

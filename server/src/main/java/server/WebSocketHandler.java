@@ -37,9 +37,9 @@ public class WebSocketHandler {
             sendError(ctx, "Error: " + ex.getMessage());
         }
     }
-    //public void onClose(WsCloseContext ctx) {
-        // optional
-    //}
+    public void onClose(WsCloseContext ctx) {
+        gameplayService.disconnect(ctx);
+    }
     //public void onError(WsErrorContext ctx) {
         // optional
     //}

@@ -40,8 +40,7 @@ public class Server {
         javalin.put("/game", this::joinGame);
         javalin.ws("/ws", ws -> {
             ws.onMessage(webSocketHandler::onMessage);
-            //ws.onClose(webSocketHandler::onClose);
-            //ws.onError(webSocketHandler::onError);
+            ws.onClose(webSocketHandler::onClose);
         });
         javalin.exception(BadRequestException.class, (e, context) -> {
             context.status(400);
