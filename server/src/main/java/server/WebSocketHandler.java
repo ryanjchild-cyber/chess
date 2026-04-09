@@ -40,9 +40,6 @@ public class WebSocketHandler {
     public void onClose(WsCloseContext ctx) {
         gameplayService.disconnect(ctx);
     }
-    //public void onError(WsErrorContext ctx) {
-        // optional
-    //}
     private void sendError(WsMessageContext ctx, String message) {
         if (message == null || !message.toLowerCase().contains("error")) {
             message = "Error: " + message;

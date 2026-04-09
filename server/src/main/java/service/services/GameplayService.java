@@ -66,7 +66,8 @@ public class GameplayService {
         dao.updateGame(updatedGame);
         send(session, new LoadGameMessage(updatedGame));
         broadcastGameOthers(gameID, auth.username(), updatedGame);
-        notifyOthers(gameID, auth.username(), auth.username() + " made move " + moveToString(move));        if (game.isInCheck(game.getTeamTurn()) && !game.isInCheckmate(game.getTeamTurn())) {
+        notifyOthers(gameID, auth.username(), auth.username() + " made move " + moveToString(move));
+        if (game.isInCheck(game.getTeamTurn()) && !game.isInCheckmate(game.getTeamTurn())) {
             String checkedPlayer = game.getTeamTurn() == ChessGame.TeamColor.WHITE
                     ? gameData.whiteUsername()
                     : gameData.blackUsername();
