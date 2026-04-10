@@ -23,6 +23,8 @@ public class Repl {
     private int currentGameID;
     private ChessGame.TeamColor perspective;
     private boolean inGame=false;
+    private final Object consoleLock = new Object();
+    private volatile boolean promptShowing = false;
     public Repl(ServerFacade server) {
         this.server=server;
     }
@@ -167,12 +169,30 @@ public class Repl {
         }
         System.out.print("color (WHITE or BLACK): ");
         String color = scanner.nextLine().trim().toUpperCase(Locale.ROOT);
+        if (!color.equals("WHITE") && !color.equals("BLACK")) {
+            System.out.println("Invalid color.");
+            return;
+        }
         GameData selected = lastListedGames.get(number - 1);
+        boolean alreadyThisPlayer =
+                (color.equals("WHITE") && auth.username().equals(selected.whiteUsername())) ||
+                        (color.equals("BLACK") && auth.username().equals(selected.blackUsername()));
+        boolean seatTakenBySomeoneElse =
+                (color.equals("WHITE") && selected.whiteUsername() != null &&
+                        !auth.username().equals(selected.whiteUsername())) ||
+                        (color.equals("BLACK") && selected.blackUsername() != null &&
+                                !auth.username().equals(selected.blackUsername()));
+        if (seatTakenBySomeoneElse) {
+            System.out.println("That color is already taken.");
+            return;
+        }
         try {
-            server.joinGame(auth.authToken(), color, selected.gameID());
-            perspective = color.equals("WHITE") ?
-                    ChessGame.TeamColor.WHITE :
-                    ChessGame.TeamColor.BLACK;
+            if (!alreadyThisPlayer) {
+                server.joinGame(auth.authToken(), color, selected.gameID());
+            }
+            perspective = color.equals("WHITE")
+                    ? ChessGame.TeamColor.WHITE
+                    : ChessGame.TeamColor.BLACK;
             currentGameID = selected.gameID();
             connectWebSocket();
             inGame = true;
@@ -193,6 +213,13 @@ public class Repl {
             return;
         }
         GameData selected = lastListedGames.get(number - 1);
+        boolean alreadyPlaying =
+                auth.username().equals(selected.whiteUsername()) ||
+                        auth.username().equals(selected.blackUsername());
+        if (alreadyPlaying) {
+            System.out.println("You are already a player in that game. Use play game instead.");
+            return;
+        }
         try {
             perspective = ChessGame.TeamColor.WHITE;
             currentGameID = selected.gameID();
@@ -246,8 +273,15 @@ public class Repl {
     private void gameplayLoop() {
         printGameplayHelp();
         while (inGame) {
-            System.out.print("[GAME] >>> ");
+            synchronized (consoleLock) {
+                promptShowing = true;
+                System.out.print("[GAME] >>> ");
+                System.out.flush();
+            }
             String input = scanner.nextLine().trim().toLowerCase();
+            synchronized (consoleLock) {
+                promptShowing = false;
+            }
             switch (input) {
                 case "help" -> printGameplayHelp();
                 case "redraw" -> redraw();
@@ -255,35 +289,50 @@ public class Repl {
                 case "resign" -> resign();
                 case "move" -> makeMove();
                 case "highlight" -> highlight();
-                default -> System.out.println("Unknown command.");
+                default -> {
+                    synchronized (consoleLock) {
+                        System.out.println("Unknown command.");
+                    }
+                }
             }
         }
     }
     private void handleMessage(String message) {
-        ServerMessage base = gson.fromJson(message, ServerMessage.class);
-        switch (base.getServerMessageType()) {
-            case LOAD_GAME -> {
-                LoadGameMessage msg = gson.fromJson(message, LoadGameMessage.class);
-                currentGame = msg.getGame();
-                redraw();
-            }
-            case NOTIFICATION -> {
-                NotificationMessage msg = gson.fromJson(message, NotificationMessage.class);
-                System.out.println(msg.getMessage());
-            }
-            case ERROR -> {
-                ErrorMessage msg = gson.fromJson(message, ErrorMessage.class);
-                System.out.println(msg.getErrorMessage());
+        synchronized (consoleLock) {
+            ServerMessage base = gson.fromJson(message, ServerMessage.class);
+            switch (base.getServerMessageType()) {
+                case LOAD_GAME -> {
+                    LoadGameMessage msg = gson.fromJson(message, LoadGameMessage.class);
+                    currentGame = msg.getGame();
+                    ChessBoardUI.draw(currentGame.game(), perspective);
+                    reprintPrompt();
+                }
+                case NOTIFICATION -> {
+                    NotificationMessage msg = gson.fromJson(message, NotificationMessage.class);
+                    System.out.println();
+                    System.out.println(msg.getMessage());
+                    reprintPrompt();
+                }
+                case ERROR -> {
+                    ErrorMessage msg = gson.fromJson(message, ErrorMessage.class);
+                    System.out.println();
+                    System.out.println(msg.getErrorMessage());
+                    reprintPrompt();
+                }
             }
         }
     }
     private void redraw() {
-        if (currentGame!=null) {
-            ChessBoardUI.draw(currentGame.game(),perspective);
+        synchronized (consoleLock) {
+            if (currentGame != null) {
+                ChessBoardUI.draw(currentGame.game(), perspective);
+                reprintPrompt();
+            }
         }
     }
     private void leave() {
         try {
+            ensureGameplayConnection();
             ws.leave(auth.authToken(), currentGameID);
             ws.close();
             inGame = false;
@@ -295,6 +344,7 @@ public class Repl {
         System.out.print("Are you sure? (yes/no): ");
         if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
             try {
+                ensureGameplayConnection();
                 ws.resign(auth.authToken(), currentGameID);
             } catch (Exception e) {
                 System.out.println("Error resigning.");
@@ -303,31 +353,41 @@ public class Repl {
     }
     private void makeMove() {
         try {
-            System.out.print("from (e.g. e2): ");
-            String from = scanner.nextLine().trim().toLowerCase();
-            System.out.print("to (e.g. e4): ");
-            String to = scanner.nextLine().trim().toLowerCase();
-            ChessMove move = new ChessMove(
-                    parsePosition(from),
-                    parsePosition(to),
-                    null
-            );
+            synchronized (consoleLock) {
+                System.out.print("from: ");
+            }
+            String fromInput = scanner.nextLine();
+            synchronized (consoleLock) {
+                System.out.print("to: ");
+            }
+            String toInput = scanner.nextLine();
+            ChessPosition from = parsePosition(fromInput);
+            ChessPosition to = parsePosition(toInput);
+            ChessMove move = new ChessMove(from, to, null);
             ws.makeMove(auth.authToken(), currentGameID, move);
         } catch (Exception e) {
-            System.out.println("Invalid move input.");
+            synchronized (consoleLock) {
+                System.out.println("Invalid move input.");
+            }
         }
     }
     private void highlight() {
         try {
-            System.out.print("piece (row col): ");
-            int r = scanner.nextInt();
-            int c = scanner.nextInt();
-            scanner.nextLine();
-            var pos = new ChessPosition(r, c);
+            synchronized (consoleLock) {
+                System.out.print("piece: ");
+            }
+            String input = scanner.nextLine();
+
+            ChessPosition pos = parsePosition(input);
             var moves = currentGame.game().validMoves(pos);
-            ChessBoardUI.draw(currentGame.game(), perspective, pos, moves);
+            synchronized (consoleLock) {
+                ChessBoardUI.draw(currentGame.game(), perspective, pos, moves);
+                reprintPrompt();
+            }
         } catch (Exception e) {
-            System.out.println("Invalid input.");
+            synchronized (consoleLock) {
+                System.out.println("Invalid input.");
+            }
         }
     }
     private void printGameplayHelp() {
@@ -352,5 +412,18 @@ public class Repl {
             throw new IllegalArgumentException("Out of bounds");
         }
         return new ChessPosition(row, col);
+    }
+    private void ensureGameplayConnection() throws Exception {
+        if (ws == null || !ws.isOpen()) {
+            ws = new WebSocketFacade(server.getServerUrl(), this::handleMessage);
+            ws.connect(auth.authToken(), currentGameID);
+        }
+    }
+    private void reprintPrompt() {
+        if (inGame) {
+            System.out.print("[GAME] >>> ");
+            System.out.flush();
+            promptShowing = true;
+        }
     }
 }

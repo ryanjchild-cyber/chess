@@ -65,7 +65,7 @@ public class GameplayService {
         );
         dao.updateGame(updatedGame);
         send(session, new LoadGameMessage(updatedGame));
-        broadcastGameOthers(gameID, auth.username(), updatedGame);
+        broadcastGameOthers(gameID, session, updatedGame);
         notifyOthers(gameID, auth.username(), auth.username() + " made move " + moveToString(move));
         if (game.isInCheck(game.getTeamTurn()) && !game.isInCheckmate(game.getTeamTurn())) {
             String checkedPlayer = game.getTeamTurn() == ChessGame.TeamColor.WHITE
@@ -199,10 +199,10 @@ public class GameplayService {
     public void disconnect(WsContext session) {
         connections.remove(session);
     }
-    private void broadcastGameOthers(int gameID, String excludeUsername, GameData game) {
+    private void broadcastGameOthers(int gameID, WsContext excludeSession, GameData game) {
         LoadGameMessage message = new LoadGameMessage(game);
         for (var connection : connections.getGameConnections(gameID)) {
-            if (!connection.getUsername().equals(excludeUsername)) {
+            if (connection.getSession() != excludeSession) {
                 send(connection.getSession(), message);
             }
         }
